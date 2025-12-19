@@ -77,8 +77,21 @@ end
 
 function CHAPTER_PANEL:SetData( data )
     self.Data = data
-    self.ChapterLabel:SetText( "CHAPTER " .. math.floor(data.num) )
-    self.ChapterNameLabel:SetText( "Chapter " .. math.floor(data.num) )
+    
+    local numStr = tostring( math.floor( data.num ) )
+    if ( data.num == 9.5 ) then numStr = "9a" end
+    
+    self.ChapterLabel:SetText( "CHAPTER " .. numStr )
+    
+    local titleKey = "#HL2_Chapter" .. numStr .. "_Title"
+    local title = language.GetPhrase( titleKey )
+    
+    -- Fallback if not found
+    if ( title == titleKey ) then
+        title = "Chapter " .. numStr
+    end
+    
+    self.ChapterNameLabel:SetText( title )
     self.LevelPic:SetImage( data.image )
 end
 

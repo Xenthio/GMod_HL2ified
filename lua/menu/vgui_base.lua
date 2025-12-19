@@ -9,15 +9,72 @@ function PANEL:Init()
     self:SetTitle( "" )
     self:ShowCloseButton( false )
     self:SetDraggable( true )
+    
+    self.FocusWeight = 1
+    self.Closing = false
+    self.LastVisible = false
+    self:SetAlpha( 0 )
+end
+
+function PANEL:Think()
+    local dframe = vgui.GetControlTable( "DFrame" )
+    if ( dframe and dframe.Think ) then
+        dframe.Think( self )
+    end
+
+    -- Detect visibility change (Open)
+    if ( self:IsVisible() != self.LastVisible ) then
+        if ( self:IsVisible() ) then
+            self:SetAlpha( 0 )
+            self.Closing = false
+        end
+        self.LastVisible = self:IsVisible()
+    end
+
+    -- Handle Focus Transition
+    local focusTime = tonumber( HL2Scheme.GetResourceString( "Frame.FocusTransitionEffectTime", nil, "SourceScheme" ) ) or 0.3
+    local targetWeight = self:IsActive() and 1 or 0
+    
+    if ( self.FocusWeight != targetWeight ) then
+        self.FocusWeight = math.Approach( self.FocusWeight, targetWeight, (1 / focusTime) * FrameTime() )
+    end
+    
+    -- Handle Visibility Fade
+    local transitionTime = tonumber( HL2Scheme.GetResourceString( "Frame.TransitionEffectTime", nil, "SourceScheme" ) ) or 0.3
+    
+    if ( self.Closing ) then
+        local alpha = self:GetAlpha()
+        alpha = math.Approach( alpha, 0, (255 / transitionTime) * FrameTime() )
+        self:SetAlpha( alpha )
+        
+        if ( alpha == 0 ) then
+            self.Closing = false
+            self:SetVisible( false )
+            if ( self:GetDeleteOnClose() ) then self:Remove() end
+        end
+    elseif ( self:IsVisible() and self:GetAlpha() < 255 ) then
+        local alpha = self:GetAlpha()
+        alpha = math.Approach( alpha, 255, (255 / transitionTime) * FrameTime() )
+        self:SetAlpha( alpha )
+    end
+end
+
+function PANEL:Close()
+    self.Closing = true
 end
 
 function PANEL:Paint( w, h )
     -- Background
-    local bgColor = HL2Scheme.GetColor( "Frame.BgColor", Color( 0, 0, 0, 196 ), "SourceScheme" )
+    local activeCol = HL2Scheme.GetColor( "Frame.BgColor", Color( 0, 0, 0, 196 ), "SourceScheme" )
+    local inactiveCol = HL2Scheme.GetColor( "Frame.OutOfFocusBgColor", Color( 160, 160, 160, 32 ), "SourceScheme" )
     
-    if ( self.IsActive and !self:IsActive() ) then
-        bgColor = HL2Scheme.GetColor( "Frame.OutOfFocusBgColor", bgColor, "SourceScheme" )
-    end
+    -- Interpolate based on FocusWeight
+    local r = Lerp( self.FocusWeight, inactiveCol.r, activeCol.r )
+    local g = Lerp( self.FocusWeight, inactiveCol.g, activeCol.g )
+    local b = Lerp( self.FocusWeight, inactiveCol.b, activeCol.b )
+    local a = Lerp( self.FocusWeight, inactiveCol.a, activeCol.a )
+    
+    local bgColor = Color( r, g, b, a )
 
     -- Draw rounded background (Corner radius usually 8-10 in Source)
     draw.RoundedBox( 8, 0, 0, w, h, bgColor )
@@ -68,6 +125,7 @@ local BUTTON = {}
 function BUTTON:Init()
     self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) ) -- Default font from scheme
     self:SetText( "" )
+    self:SetCursor( "arrow" ) -- Don't change cursor to hand
 end
 
 function BUTTON:Paint( w, h )
@@ -100,7 +158,7 @@ function BUTTON:Paint( w, h )
         surface.DrawLine( w-1, 0, w-1, h-1 ) -- Right
         surface.DrawLine( 0, h-1, w-1, h-1 ) -- Bottom
         
-    elseif ( isHovered ) then
+    elseif ( isHovered and false ) then
         textColor = HL2Scheme.GetColor( "Button.ArmedTextColor", textColor )
         bgColor = HL2Scheme.GetColor( "Button.ArmedBgColor", Color( 255, 255, 255, 10 ) )
         

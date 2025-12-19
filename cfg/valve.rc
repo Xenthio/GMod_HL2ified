@@ -13,5 +13,5 @@ exec autoexec.cfg
 stuffcmds
 
 // display the startup level. Remove this if you're using background images instead of maps
-gamemode base
+gamemode campaign
 startupmenu
