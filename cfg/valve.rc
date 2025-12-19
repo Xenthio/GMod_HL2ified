@@ -14,4 +14,5 @@ stuffcmds
 
 // display the startup level. Remove this if you're using background images instead of maps
 gamemode campaign
-startupmenu
+map_background background03
+//startupmenu
