@@ -52,9 +52,9 @@ end
 
 function PANEL:ApplySchemeSettings()
     -- Get colors from scheme
-    self.TextColor = HL2Scheme.GetColor( "MainMenu.TextColor", Color( 200, 200, 200, 255 ), "ClientScheme" )
-    self.ArmedColor = HL2Scheme.GetColor( "MainMenu.ArmedTextColor", Color( 255, 255, 255, 255 ), "ClientScheme" )
-    self.DepressedColor = HL2Scheme.GetColor( "MainMenu.DepressedTextColor", Color( 100, 100, 100, 255 ), "ClientScheme" )
+    self.TextColor = HL2Scheme.GetColor( "MainMenu.TextColor", Color( 200, 200, 200, 255 ), "SourceScheme" )
+    self.ArmedColor = HL2Scheme.GetColor( "MainMenu.ArmedTextColor", Color( 255, 255, 255, 255 ), "SourceScheme" )
+    self.DepressedColor = HL2Scheme.GetColor( "MainMenu.TextColor", Color( 100, 100, 100, 255 ), "SourceScheme" ) // Depressed unused in hl2
     
     -- Get font with fallback logic
     -- 1. Try MainMenuFont in ClientScheme
@@ -182,7 +182,23 @@ end
 
 function PANEL:UpdateMenuItemState()
     local inGame = IsInGame()
-    local isMulti = inGame and ( game.MaxPlayers() > 1 )
+    
+    -- Hack: If we are on a background map, treat as not in game
+    if ( inGame and game.GetMap ) then
+        local map = game.GetMap()
+        if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
+            inGame = false
+        end
+    end
+
+    local maxPlayers = 1
+    if ( game.MaxPlayers ) then
+        maxPlayers = game.MaxPlayers()
+    elseif ( GetMaxPlayers ) then
+        maxPlayers = GetMaxPlayers()
+    end
+    
+    local isMulti = inGame and ( maxPlayers > 1 )
     
     local y = 0
     local visibleCount = 0
@@ -191,10 +207,16 @@ function PANEL:UpdateMenuItemState()
         local data = btn.UserData
         local visible = true
         
-        if ( data.OnlyInGame and !inGame ) then visible = false end
-        if ( data.notmulti and isMulti ) then visible = false end
-        if ( data.notsingle and inGame and !isMulti ) then visible = false end
-        if ( data.ConsoleOnly ) then visible = false end
+        -- Check flags (case-insensitive fallback)
+        local onlyInGame = data.OnlyInGame or data.onlyingame
+        local notMulti = data.notmulti or data.NotMulti
+        local notSingle = data.notsingle or data.NotSingle
+        local consoleOnly = data.ConsoleOnly or data.consoleonly
+        
+        if ( onlyInGame and !inGame ) then visible = false end
+        if ( notMulti and isMulti ) then visible = false end
+        if ( notSingle and inGame and !isMulti ) then visible = false end
+        if ( consoleOnly ) then visible = false end
         
         btn:SetVisible( visible )
         
@@ -271,12 +293,24 @@ function PANEL:ApplySchemeSettings()
         local x = tonumber( HL2Scheme.GetResourceString( "Main.Title" .. i .. ".X", nil, "ClientScheme" ) ) or 32
         local y = tonumber( HL2Scheme.GetResourceString( "Main.Title" .. i .. ".Y", nil, "ClientScheme" ) ) or (100 + i * 50)
         local col = HL2Scheme.GetColor( "Main.Title" .. i .. ".Color", Color( 255, 255, 255, 255 ), "ClientScheme" )
-        local font = HL2Scheme.GetFont( "ClientTitleFont", "DermaLarge", "ClientScheme", "ClientScheme" )
+        -- local font = HL2Scheme.GetFont( "ClientTitleFont", "DermaLarge", "ClientScheme", "ClientScheme" )
+        
+        -- Create a scaled font for the title
+        local fontName = "ClientTitleFont_Scaled"
+        local baseSize = 32 -- Base size for 480p
+        
+        surface.CreateFont( fontName, {
+            font = "HALFLIFE2",
+            size = SchemeScale( baseSize ),
+            weight = 0,
+            antialias = true,
+            additive = false
+        } )
         
         x = SchemeScale( x )
         y = SchemeScale( y )
         
-        lbl:SetFont( font )
+        lbl:SetFont( fontName )
         lbl:SetTextColor( col )
         lbl:SizeToContents()
         lbl:SetSize( lbl:GetWide() + 10, lbl:GetTall() ) -- Padding
@@ -317,11 +351,20 @@ function PANEL:PerformLayout()
 end
 
 function PANEL:Paint( w, h )
-    if ( !IsInGame() ) then
+    -- Check for game state change to update menu items
+    local inGame = IsInGame()
+    if ( self.LastInGame != inGame ) then
+        self.LastInGame = inGame
+        if ( IsValid( self.GameMenu ) ) then
+            self.GameMenu:InvalidateLayout()
+        end
+    end
+
+    if ( !inGame ) then
         -- Draw Background Image
         -- TODO: Load console/background01
-        surface.SetDrawColor( 0, 0, 0, 255 )
-        surface.DrawRect( 0, 0, w, h )
+        -- surface.SetDrawColor( 0, 0, 0, 255 )
+        -- surface.DrawRect( 0, 0, w, h )
         
         -- Try to draw background image if available
         -- local bg = Material("console/background01")
@@ -329,11 +372,11 @@ function PANEL:Paint( w, h )
         -- surface.DrawTexturedRect(0, 0, w, h)
     else
         -- Draw Blur
-        Derma_DrawBackgroundBlur( self, 0 )
+        -- Derma_DrawBackgroundBlur( self, 0 )
         
         -- Draw darkened background if needed (e.g. pause menu)
-        surface.SetDrawColor( 0, 0, 0, 120 )
-        surface.DrawRect( 0, 0, w, h )
+        -- surface.SetDrawColor( 0, 0, 0, 120 )
+        -- surface.DrawRect( 0, 0, w, h )
     end
 end
 
