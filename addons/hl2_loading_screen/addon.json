@@ -1,0 +1,8 @@
+{
+	"title": "HL2 Loading Screen",
+	"type": "tool",
+	"tags": [],
+	"ignore": [
+		"placemeinroot/*"
+	]
+}

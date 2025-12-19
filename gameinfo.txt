@@ -1,7 +1,7 @@
 "GameInfo"
 {
 	game	"HALF-LIFE 2"
-	title	"HALF-LIFE'"
+	title	"" // "HALF-LIFE'"
 	title2	""
 
 	FileSystem
