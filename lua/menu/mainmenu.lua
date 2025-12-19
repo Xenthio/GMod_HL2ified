@@ -20,6 +20,17 @@ local function LoadModInfo()
 end
 LoadModInfo()
 
+-- Constants
+local BACKGROUND_MAPS = {
+    ["background01"] = true,
+    ["background02"] = true,
+    ["background03"] = true,
+    ["background04"] = true,
+    ["background05"] = true
+}
+
+local SAVE_COMPLETION_DELAY = 0.5 -- Time in seconds to wait for save to complete before quitting
+
 -- Helper for proportional scaling (Source engine standard is based on 480 height)
 local function SchemeScale( val )
     return math.floor( val * ( ScrH() / 480 ) )
@@ -308,7 +319,7 @@ function SAVE_QUIT_PANEL:OnSaveAndQuit()
     RunConsoleCommand( "save", saveName )
     
     -- Small delay to allow save to complete
-    timer.Simple( 0.5, function()
+    timer.Simple( SAVE_COMPLETION_DELAY, function()
         RunConsoleCommand( "quit" )
     end )
     
@@ -370,7 +381,7 @@ function PANEL:UpdateMenuItemState()
     -- Hack: If we are on a background map, treat as not in game
     if ( inGame and game.GetMap ) then
         local map = game.GetMap()
-        if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
+        if ( BACKGROUND_MAPS[map] ) then
             inGame = false
         end
     end
@@ -559,7 +570,7 @@ function PANEL:Paint( w, h )
         local isBackground = false
         if ( game.GetMap ) then
             local map = game.GetMap()
-            if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
+            if ( BACKGROUND_MAPS[map] ) then
                 isBackground = true
             end
         end
@@ -600,7 +611,7 @@ function OpenQuitConfirmationDialog()
     -- Check if we are on a background map
     if ( inGame and game.GetMap ) then
         local map = game.GetMap()
-        if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
+        if ( BACKGROUND_MAPS[map] ) then
             inGame = false
         end
     end
