@@ -35,9 +35,18 @@ if (!(Test-Path $BuildPath)) {
 # wipe directory contents
 Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
-        # Inside garrysmod, delete everything EXCEPT saves and cache
+        # Inside garrysmod, delete everything EXCEPT saves, cache, and specific configs
         Get-ChildItem -Path $_.FullName | ForEach-Object {
-            if ($_.Name -ne "saves" -and $_.Name -ne "cache") {
+            if ($_.Name -eq "saves" -or $_.Name -eq "cache") {
+                # Keep these folders
+            } elseif ($_.Name -eq "cfg" -and $_.PSIsContainer) {
+                # Inside cfg, keep autoexec.cfg and addonnomount.cfg
+                Get-ChildItem -Path $_.FullName | ForEach-Object {
+                    if ($_.Name -ne "autoexec.cfg" -and $_.Name -ne "addonnomount.cfg") {
+                        Remove-Item -Path $_.FullName -Recurse -Force
+                    }
+                }
+            } else {
                 Remove-Item -Path $_.FullName -Recurse -Force
             }
         }
@@ -222,8 +231,19 @@ Get-ChildItem -Path $SourcePath -Exclude $excludeList | ForEach-Object {
             Copy-Item -Path $_.FullName -Destination $targetItem -Recurse -Force
         } else {
             # Destination exists (e.g. lua folder), merge contents
-            # Copy-Item "Folder/*" to "Dest/Folder" merges correctly
-            Copy-Item -Path "$($_.FullName)\*" -Destination $targetItem -Recurse -Force
+            if ($_.Name -eq "cfg") {
+                # Special handling for cfg to protect autoexec.cfg
+                Get-ChildItem -Path $_.FullName | ForEach-Object {
+                    $destFile = Join-Path $targetItem $_.Name
+                    if ($_.Name -eq "autoexec.cfg" -and (Test-Path $destFile)) {
+                        Write-Host "    -> Skipping autoexec.cfg (already exists)"
+                    } else {
+                        Copy-Item -Path $_.FullName -Destination $targetItem -Recurse -Force
+                    }
+                }
+            } else {
+                Copy-Item -Path "$($_.FullName)\*" -Destination $targetItem -Recurse -Force
+            }
         }
     } else {
         # It's a file

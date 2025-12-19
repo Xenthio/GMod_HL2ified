@@ -371,12 +371,23 @@ function PANEL:Paint( w, h )
         -- surface.SetMaterial(bg)
         -- surface.DrawTexturedRect(0, 0, w, h)
     else
-        -- Draw Blur
-        -- Derma_DrawBackgroundBlur( self, 0 )
-        
-        -- Draw darkened background if needed (e.g. pause menu)
-        -- surface.SetDrawColor( 0, 0, 0, 120 )
-        -- surface.DrawRect( 0, 0, w, h )
+        -- Check if we are on a background map
+        local isBackground = false
+        if ( game.GetMap ) then
+            local map = game.GetMap()
+            if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
+                isBackground = true
+            end
+        end
+
+        if ( !isBackground ) then
+            -- Draw Blur
+            -- Derma_DrawBackgroundBlur( self, 0 )
+            
+            -- Draw darkened background if needed (e.g. pause menu)
+            surface.SetDrawColor( 0, 0, 0, 120 )
+            surface.DrawRect( 0, 0, w, h )
+        end
     end
 end
 
