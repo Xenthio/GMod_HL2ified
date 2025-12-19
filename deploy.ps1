@@ -1,7 +1,18 @@
 param(
-    [string]$GModPath = "e:\SteamLibrary\steamapps\common\GarrysMod",
+    [string]$GModPath,
     [string]$BuildDirName = "GMod_Runtime_Build"
 )
+
+# Resolve GMod Path
+if ([string]::IsNullOrEmpty($GModPath)) {
+    $ConfigPath = Join-Path $PSScriptRoot "gmod_path.txt"
+    if (Test-Path $ConfigPath) {
+        $GModPath = (Get-Content $ConfigPath -Raw).Trim()
+        Write-Host "[*] Read GModPath from $ConfigPath"
+    } else {
+        $GModPath = "e:\SteamLibrary\steamapps\common\GarrysMod"
+    }
+}
 
 $SourcePath = $PSScriptRoot
 # Build path will be created as a sibling to the current folder
@@ -135,6 +146,13 @@ $langFile = Join-Path $srcResource "garrysmod_english.txt"
 if (Test-Path $langFile) {
     Copy-Item -Path $langFile -Destination (Join-Path $destResource "garrysmod_english.txt") -Force
     Write-Host "    -> Copied garrysmod_english.txt"
+}
+
+# Copy HL2MP.ttf
+$hl2mpFont = Join-Path $srcResource "HL2MP.ttf"
+if (Test-Path $hl2mpFont) {
+    Copy-Item -Path $hl2mpFont -Destination (Join-Path $destResource "HL2MP.ttf") -Force
+    Write-Host "    -> Copied HL2MP.ttf"
 }
 
 # copy resource/language folder
