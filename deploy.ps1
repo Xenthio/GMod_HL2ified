@@ -85,15 +85,73 @@ if (!(Test-Path $BuildGModPath)) {
     Write-Host "[+] Created local garrysmod folder"
 }
 
-# 3.5 Symlink VPKs from base garrysmod
-Write-Host "[*] Linking VPKs..."
+# 3.5 Copy VPKs from base garrysmod (Copy instead of Link to allow patching)
+Write-Host "[*] Copying VPKs..."
 $vpkFiles = Get-ChildItem -Path (Join-Path $GModPath "garrysmod") -Filter "*.vpk"
 foreach ($vpk in $vpkFiles) {
     $dest = Join-Path $BuildGModPath $vpk.Name
+    
+    # Check if destination exists
+    if (Test-Path $dest) {
+        # Check if it's a symlink/reparse point
+        $item = Get-Item $dest
+        if ($item.Attributes -match "ReparsePoint") {
+            # It's a symlink, delete it so we can copy
+            Remove-Item $dest -Force
+            Write-Host "    -> Removed symlink for $($vpk.Name)"
+        }
+    }
+    
+    # Copy if doesn't exist (or was just deleted)
     if (!(Test-Path $dest)) {
-        # Using symbolic links for VPKs
-        cmd /c mklink "$dest" "$($vpk.FullName)" | Out-Null
-        Write-Host "    -> Linked VPK: $($vpk.Name)"
+        Copy-Item -Path $vpk.FullName -Destination $dest -Force
+        Write-Host "    -> Copied VPK: $($vpk.Name)"
+    }
+}
+
+# 3.5.1 Patch VPKs if source folder exists
+$vpkPatchFolder = Join-Path $SourcePath "garrysmod.vpk"
+if (Test-Path $vpkPatchFolder) {
+    Write-Host "[*] Patching garrysmod_dir.vpk with content from garrysmod.vpk folder..."
+    
+    $vpkTool = Join-Path $GModPath "bin\vpk.exe"
+    if (Test-Path $vpkTool) {
+        $targetVpk = Join-Path $BuildGModPath "garrysmod_dir.vpk"
+        
+        # Create a temporary response file listing all files to add
+        $responseFile = Join-Path $BuildGModPath "vpk_patch_list.txt"
+        
+        # Change to patch directory to get relative paths
+        Push-Location $vpkPatchFolder
+        try {
+            # Get all files recursively
+            $files = Get-ChildItem -Recurse -File
+            if ($files.Count -gt 0) {
+                # Write relative paths to response file
+                $files | ForEach-Object {
+                    # Get relative path
+                    $relPath = $_.FullName.Substring($vpkPatchFolder.Length + 1)
+                    $relPath
+                } | Set-Content $responseFile
+                
+                # Run vpk.exe to add files
+                Write-Host "    -> Adding $($files.Count) files to VPK..."
+                $proc = Start-Process -FilePath $vpkTool -ArgumentList "a `"$targetVpk`" `@`"$responseFile`"" -Wait -NoNewWindow -PassThru
+                
+                if ($proc.ExitCode -eq 0) {
+                    Write-Host "    -> VPK Patching Successful"
+                } else {
+                    Write-Host "    -> VPK Patching Failed with exit code $($proc.ExitCode)"
+                }
+            } else {
+                Write-Host "    -> No files found in patch folder."
+            }
+        } finally {
+            Pop-Location
+            if (Test-Path $responseFile) { Remove-Item $responseFile }
+        }
+    } else {
+        Write-Host "    -> ERROR: vpk.exe not found at $vpkTool"
     }
 }
 

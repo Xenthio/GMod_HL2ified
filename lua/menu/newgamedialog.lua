@@ -181,7 +181,7 @@ function PANEL:Init()
     self.btnCancel:SetPos( 500, 252 )
     self.btnCancel:SetSize( 72, 24 )
     self.btnCancel:SetContentAlignment( 4 ) -- Left aligned
-    self.btnCancel.DoClick = function() self:Remove() end
+    self.btnCancel.DoClick = function() self:Close() end
     
     -- Chapter Container
     self.ChapterContainer = vgui.Create( "DPanel", self )
@@ -269,7 +269,7 @@ function PANEL:StartGame()
             end
         end
         
-        self:Remove()
+        self:Close()
     end
 end
 

@@ -2,6 +2,7 @@
 if ( SERVER ) then return end
 
 include( "vgui_scheme.lua" )
+include( "skins/hl2.lua" )
 include( "vgui_base.lua" )
 include( "newgamedialog.lua" )
 
