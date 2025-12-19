@@ -62,9 +62,16 @@ function CHAPTER_PANEL:Init()
         surface.DrawRect( 0, 0, w, h )
     end
     
-    self.LevelPic = vgui.Create( "DImage", self )
+    self.LevelPic = vgui.Create( "DPanel", self )
     self.LevelPic:SetPos( 10, 50 )
     self.LevelPic:SetSize( 152, 86 )
+    self.LevelPic.Paint = function( self, w, h )
+        if ( !self.Mat ) then return end
+        surface.SetDrawColor( 255, 255, 255, 255 )
+        surface.SetMaterial( self.Mat )
+        -- Draw top quarter of the image (0.0 to 0.25)
+        surface.DrawTexturedRectUV( 0, 0, w, h, 0, 0, 0.58, 0.63 )
+    end
     
     self.Button = vgui.Create( "Button", self )
     self.Button:SetSize( 172, 150 )
@@ -92,7 +99,7 @@ function CHAPTER_PANEL:SetData( data )
     end
     
     self.ChapterNameLabel:SetText( title )
-    self.LevelPic:SetImage( data.image )
+    self.LevelPic.Mat = Material( data.image )
 end
 
 function CHAPTER_PANEL:SetSelected( bSelected )
@@ -216,14 +223,14 @@ end
 
 function PANEL:NextPage()
     if ( (self.CurrentIndex + 2) < #chapters ) then
-        self.CurrentIndex = self.CurrentIndex + 1
+        self.CurrentIndex = self.CurrentIndex + 3 -- 3 items per page
         self:UpdateChapters()
     end
 end
 
 function PANEL:PrevPage()
     if ( self.CurrentIndex > 1 ) then
-        self.CurrentIndex = self.CurrentIndex - 1
+        self.CurrentIndex = self.CurrentIndex - 3 -- 3 items per page
         self:UpdateChapters()
     end
 end
