@@ -73,6 +73,13 @@ function PLAYER:StartMove( move )
 		self.Player:SetWalkSpeed(self.WalkSpeed)
 	end
 
+    -- Autobhop
+    if bit.band( move:GetButtons(), IN_JUMP ) ~= 0 then
+        if not self.Player:IsOnGround() and self.Player:WaterLevel() < 2 then
+            move:SetButtons( bit.band( move:GetButtons(), bit.bnot( IN_JUMP ) ) )
+        end
+    end
+
 	-- Only apply the jump boost in FinishMove if the player has jumped during this frame
 	-- Using a global variable is safe here because nothing else happens between SetupMove and FinishMove
 	if bit.band( move:GetButtons(), IN_JUMP ) ~= 0 and bit.band( move:GetOldButtons(), IN_JUMP ) == 0 and self.Player:OnGround() then
