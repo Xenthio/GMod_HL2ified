@@ -31,6 +31,11 @@ local BACKGROUND_MAPS = {
 
 local SAVE_COMPLETION_DELAY = 0.5 -- Time in seconds to wait for save to complete before quitting
 
+-- Helper function to check if a map is a background map
+local function IsBackgroundMap( mapName )
+    return BACKGROUND_MAPS[mapName] == true
+end
+
 -- Helper for proportional scaling (Source engine standard is based on 480 height)
 local function SchemeScale( val )
     return math.floor( val * ( ScrH() / 480 ) )
@@ -380,8 +385,7 @@ function PANEL:UpdateMenuItemState()
     
     -- Hack: If we are on a background map, treat as not in game
     if ( inGame and game.GetMap ) then
-        local map = game.GetMap()
-        if ( BACKGROUND_MAPS[map] ) then
+        if ( IsBackgroundMap( game.GetMap() ) ) then
             inGame = false
         end
     end
@@ -569,10 +573,7 @@ function PANEL:Paint( w, h )
         -- Check if we are on a background map
         local isBackground = false
         if ( game.GetMap ) then
-            local map = game.GetMap()
-            if ( BACKGROUND_MAPS[map] ) then
-                isBackground = true
-            end
+            isBackground = IsBackgroundMap( game.GetMap() )
         end
 
         if ( !isBackground ) then
@@ -610,8 +611,7 @@ function OpenQuitConfirmationDialog()
     
     -- Check if we are on a background map
     if ( inGame and game.GetMap ) then
-        local map = game.GetMap()
-        if ( BACKGROUND_MAPS[map] ) then
+        if ( IsBackgroundMap( game.GetMap() ) ) then
             inGame = false
         end
     end
