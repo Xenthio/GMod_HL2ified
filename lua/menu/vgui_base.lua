@@ -15,6 +15,10 @@ function PANEL:Paint( w, h )
     -- Background
     local bgColor = HL2Scheme.GetColor( "Frame.BgColor", Color( 0, 0, 0, 196 ) )
     
+    if ( self.IsActive and !self:IsActive() ) then
+        bgColor = HL2Scheme.GetColor( "Frame.OutOfFocusBgColor", bgColor )
+    end
+
     -- Draw rounded background (Corner radius usually 8-10 in Source)
     draw.RoundedBox( 8, 0, 0, w, h, bgColor )
     
@@ -31,8 +35,8 @@ function PANEL:Paint( w, h )
     -- surface.DrawOutlinedRect( 0, 0, w, h ) -- Rectangular border looks bad on rounded bg
     
     -- Title bar divider
-    surface.SetDrawColor( borderColor )
-    surface.DrawLine( 0, 36, w, 36 )
+    -- surface.SetDrawColor( borderColor )
+    -- surface.DrawLine( 0, 28, w, 28 )
     
     -- Title
     if ( self.TitleText ) then
@@ -132,8 +136,53 @@ function BUTTON:Paint( w, h )
     
     -- Draw Text
     self:SetTextColor( textColor )
+    -- DButton:Paint calls DrawLabel if we don't return true?
+    -- Actually DButton:Paint does:
+    -- if ( self.m_bBorder ) then self.Skin:PaintButton( self, w, h ) end
+    -- return false
+    -- But we are overriding Paint completely.
+    -- We need to call the base class Paint to draw the text, OR draw it ourselves.
+    -- DLabel:Paint (which DButton inherits) draws the text.
+    -- So we should call BaseClass.Paint( self, w, h ) but that might draw the skin's button background.
+    -- Instead, let's just rely on DLabel's ApplySchemeSettings or just call DrawLabel?
+    -- DLabel doesn't have a DrawLabel method exposed easily usually, it's in Paint.
+    -- Wait, DButton is a DLabel. DLabel:Paint() draws text.
+    -- If we return false, does it call base? No, Paint is the function.
     
-    return false 
+    -- We must draw the text manually or call a method to do it.
+    -- DLabel has :SetText() and :SetFont().
+    -- We can use self:ApplySchemeSettings() to update colors?
+    -- Let's just use the standard way to draw text in a button if we are overriding Paint.
+    
+    local font = self:GetFont()
+    surface.SetFont( font )
+    local tw, th = surface.GetTextSize( self:GetText() )
+    
+    local tx, ty = 0, 0
+    local align = self:GetContentAlignment() -- 4 = left, 5 = center, 6 = right
+    
+    if ( align == 4 ) then -- Left
+        tx = 10
+        ty = (h - th) / 2
+    elseif ( align == 6 ) then -- Right
+        tx = w - tw - 10
+        ty = (h - th) / 2
+    else -- Center (5)
+        tx = (w - tw) / 2
+        ty = (h - th) / 2
+    end
+    
+    -- Offset if depressed
+    if ( isDown ) then
+        tx = tx + 1
+        ty = ty + 1
+    end
+    
+    surface.SetTextColor( textColor )
+    surface.SetTextPos( tx, ty )
+    surface.DrawText( self:GetText() )
+    
+    return true
 end
 
 vgui.Register( "HL2Button", BUTTON, "DButton" )

@@ -13,7 +13,7 @@ local function LoadChapters()
 			table.insert( chapters, {
 				file = f,
 				num = tonumber( num ),
-                image = "chapters/chapter" .. num
+                image = "vgui/chapters/chapter" .. num
 			} )
 		end
 	end
@@ -22,7 +22,7 @@ local function LoadChapters()
          table.insert( chapters, {
             file = "chapter9a.cfg",
             num = 9.5,
-            image = "chapters/chapter9a"
+            image = "vgui/chapters/chapter9a"
         } )
     end
 	
@@ -36,11 +36,12 @@ local CHAPTER_PANEL = {}
 
 function CHAPTER_PANEL:Init()
     self:SetSize( 172, 150 )
+    self:SetPaintBackground( false )
     
     self.ChapterLabel = vgui.Create( "DLabel", self )
     self.ChapterLabel:SetPos( 0, 4 )
     self.ChapterLabel:SetSize( 172, 20 )
-    self.ChapterLabel:SetFont( "DefaultBold" ) -- Use standard scheme font
+    self.ChapterLabel:SetFont( "UiBold" ) -- Use standard scheme font
     self.ChapterLabel:SetText( "CHAPTER" )
     self.ChapterLabel:SetContentAlignment( 4 ) 
     self.ChapterLabel:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ) ) )
@@ -48,7 +49,7 @@ function CHAPTER_PANEL:Init()
     self.ChapterNameLabel = vgui.Create( "DLabel", self )
     self.ChapterNameLabel:SetPos( 0, 20 )
     self.ChapterNameLabel:SetSize( 172, 20 )
-    self.ChapterNameLabel:SetFont( "DefaultBold" )
+    self.ChapterNameLabel:SetFont( "UiBold" )
     self.ChapterNameLabel:SetText( "NAME" )
     self.ChapterNameLabel:SetContentAlignment( 4 )
     self.ChapterNameLabel:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ) ) )
@@ -97,7 +98,7 @@ function CHAPTER_PANEL:SetSelected( bSelected )
     end
 end
 
-vgui.Register( "CGameChapterPanel", CHAPTER_PANEL, "EditablePanel" )
+vgui.Register( "CGameChapterPanel", CHAPTER_PANEL, "DPanel" )
 
 -- ---------------------------------------------------------
 -- CNewGameDialog
@@ -113,7 +114,7 @@ function PANEL:Init()
     
     -- Dividers
     local div1 = vgui.Create( "Panel", self )
-    div1:SetPos( 24, 44 )
+    div1:SetPos( 24, 34 ) -- Matches .res (was 44)
     div1:SetSize( 548, 2 )
     div1.Paint = function( s, w, h ) 
         surface.SetDrawColor( HL2Scheme.GetColor("Border.Dark", Color(0,0,0,100)) )
@@ -137,6 +138,7 @@ function PANEL:Init()
     self.btnNext:SetText( "#GameUI_Next" )
     self.btnNext:SetPos( 500, 200 )
     self.btnNext:SetSize( 72, 24 )
+    self.btnNext:SetContentAlignment( 4 ) -- Left aligned
     self.btnNext.DoClick = function() self:NextPage() end
     
     self.btnPrev = vgui.Create( "HL2Button", self )
@@ -144,24 +146,28 @@ function PANEL:Init()
     self.btnPrev:SetPos( 24, 200 )
     self.btnPrev:SetSize( 72, 24 )
     self.btnPrev:SetVisible( false )
+    self.btnPrev:SetContentAlignment( 4 ) -- Left aligned
     self.btnPrev.DoClick = function() self:PrevPage() end
     
     self.btnPlay = vgui.Create( "HL2Button", self )
     self.btnPlay:SetText( "#GameUI_StartNewGame" )
     self.btnPlay:SetPos( 363, 252 )
     self.btnPlay:SetSize( 124, 24 )
+    self.btnPlay:SetContentAlignment( 4 ) -- Left aligned
     self.btnPlay.DoClick = function() self:StartGame() end
     
     self.btnCancel = vgui.Create( "HL2Button", self )
     self.btnCancel:SetText( "#GameUI_Cancel" )
     self.btnCancel:SetPos( 500, 252 )
     self.btnCancel:SetSize( 72, 24 )
+    self.btnCancel:SetContentAlignment( 4 ) -- Left aligned
     self.btnCancel.DoClick = function() self:Remove() end
     
     -- Chapter Container
-    self.ChapterContainer = vgui.Create( "Panel", self )
-    self.ChapterContainer:SetPos( 24, 50 )
+    self.ChapterContainer = vgui.Create( "DPanel", self )
+    self.ChapterContainer:SetPos( 24, 40 ) -- Matches C++ default chapterypos (was 50)
     self.ChapterContainer:SetSize( 548, 160 )
+    self.ChapterContainer:SetPaintBackground( false )
     
     LoadChapters()
     self.CurrentIndex = 1
@@ -179,7 +185,7 @@ function PANEL:UpdateChapters()
         local data = chapters[idx]
         if ( data ) then
             local pnl = vgui.Create( "CGameChapterPanel", self.ChapterContainer )
-            pnl:SetPos( startX + (i * gap), 5 )
+            pnl:SetPos( startX + (i * gap), 0 ) -- Was 5, now 0 to avoid overlap
             pnl:SetData( data )
             pnl.DoClick = function()
                 self:SelectChapter( idx )
@@ -197,14 +203,14 @@ end
 
 function PANEL:NextPage()
     if ( (self.CurrentIndex + 2) < #chapters ) then
-        self.CurrentIndex = self.CurrentIndex + 1
+        self.CurrentIndex = self.CurrentIndex + 3
         self:UpdateChapters()
     end
 end
 
 function PANEL:PrevPage()
     if ( self.CurrentIndex > 1 ) then
-        self.CurrentIndex = self.CurrentIndex - 1
+        self.CurrentIndex = self.CurrentIndex - 3
         self:UpdateChapters()
     end
 end
@@ -220,7 +226,29 @@ function PANEL:StartGame()
         RunConsoleCommand( "disconnect" )
         RunConsoleCommand( "deathmatch", "0" )
         RunConsoleCommand( "progress_enable" )
-        RunConsoleCommand( "exec", data.file )
+        
+        -- Manually parse and execute the chapter config since 'exec' is blocked
+        local content = file.Read( "cfg/" .. data.file, "GAME" )
+        if ( content ) then
+            for _, line in ipairs( string.Explode( "\n", content ) ) do
+                line = string.Trim( line )
+                -- Strip comments
+                line = line:gsub( "//.*$", "" )
+                line = string.Trim( line )
+                
+                if ( line ~= "" ) then
+                    local cmd, args = line:match( "([^%s]+)%s+(.+)" )
+                    if ( !cmd ) then cmd = line args = "" end
+                    
+                    if ( cmd:lower() == "map" ) then
+                        RunConsoleCommand( "map", args )
+                    elseif ( cmd:lower() ~= "exec" ) then
+                        RunConsoleCommand( cmd, args )
+                    end
+                end
+            end
+        end
+        
         self:Remove()
     end
 end

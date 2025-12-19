@@ -94,6 +94,15 @@ foreach ($gm in $gamemodesToCopy) {
     }
 }
 
+# 3.6 Copy Scenes
+Write-Host "[*] Copying base scenes..."
+$srcScenes = Join-Path $GModPath "garrysmod\scenes"
+$destScenes = Join-Path $BuildGModPath "scenes"
+if (Test-Path $srcScenes) {
+    Copy-Item -Path $srcScenes -Destination $destScenes -Recurse -Force
+    Write-Host "    -> Copied scenes folder"
+}
+
 # 3.8 Copy Essential Resources Only
 Write-Host "[*] Copying essential resources..."
 $srcResource = Join-Path $GModPath "garrysmod\resource"
@@ -107,6 +116,22 @@ $langFile = Join-Path $srcResource "garrysmod_english.txt"
 if (Test-Path $langFile) {
     Copy-Item -Path $langFile -Destination (Join-Path $destResource "garrysmod_english.txt") -Force
     Write-Host "    -> Copied garrysmod_english.txt"
+}
+
+# copy resource/language folder
+$srcLanguages = Join-Path $srcResource "language"
+$destLanguages = Join-Path $destResource "language"
+if (Test-Path $srcLanguages) {
+    Copy-Item -Path $srcLanguages -Destination $destLanguages -Recurse -Force
+    Write-Host "    -> Copied language"
+}
+
+# copy resource/localization folder
+$srcLocalization = Join-Path $srcResource "localization"
+$destLocalization = Join-Path $destResource "localization"
+if (Test-Path $srcLocalization) {
+    Copy-Item -Path $srcLocalization -Destination $destLocalization -Recurse -Force
+    Write-Host "    -> Copied localization"
 }
 
 # Copy fonts

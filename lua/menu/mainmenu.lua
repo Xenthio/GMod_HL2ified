@@ -22,10 +22,12 @@ local function CreateMainMenu()
 	end
 
 	-- Create the main panel
-	pnlMainMenu = vgui.Create( "EditablePanel" )
+	pnlMainMenu = vgui.Create( "DPanel" )
 	pnlMainMenu:SetSize( ScrW(), ScrH() )
-	pnlMainMenu:MakePopup()
+	-- pnlMainMenu:MakePopup() -- Removed to prevent focus stealing/z-order issues
+    pnlMainMenu:SetMouseInputEnabled( true )
 	pnlMainMenu:SetKeyboardInputEnabled( false )
+    pnlMainMenu:SetPaintBackground( false )
     
     -- Stub for problems.lua
     function pnlMainMenu:SetProblemCount( count )
@@ -39,9 +41,29 @@ local function CreateMainMenu()
 	
 	-- Draw background
 	pnlMainMenu.Paint = function( self, w, h )
-		-- Draw a nice background or the map background
-		-- For now, just a blur
-		-- Derma_DrawBackgroundBlur( self, 0 )
+		-- If we are not in a game (void), draw a solid background
+        if ( !IsInGame() ) then
+            surface.SetDrawColor( 0, 0, 0, 255 )
+            surface.DrawRect( 0, 0, w, h )
+            return
+        end
+        
+        -- If we are in a game, check if it's a background map
+        -- Heuristic: HUD is usually disabled in background maps
+        local isBackground = GetConVar("cl_drawhud"):GetInt() == 0
+        
+        -- Fallback: Check map name
+        if ( !isBackground ) then
+             local map = game.GetMap()
+             if ( map and (string.find(map, "^background") or map == "test_hardware") ) then
+                 isBackground = true
+             end
+        end
+        
+        if ( !isBackground ) then
+            -- In a real game (Pause menu), draw blur
+            Derma_DrawBackgroundBlur( self, 0 )
+        end
 	end
 
 	-- Load GameMenu.res
