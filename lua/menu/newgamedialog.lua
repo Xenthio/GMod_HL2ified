@@ -41,24 +41,24 @@ function CHAPTER_PANEL:Init()
     self.ChapterLabel = vgui.Create( "DLabel", self )
     self.ChapterLabel:SetPos( 0, 4 )
     self.ChapterLabel:SetSize( 172, 20 )
-    self.ChapterLabel:SetFont( "UiBold" ) -- Use standard scheme font
+    self.ChapterLabel:SetFont( HL2Scheme.GetFont( "UiBold", "UiBold", "SourceScheme" ) ) -- Use standard scheme font
     self.ChapterLabel:SetText( "CHAPTER" )
     self.ChapterLabel:SetContentAlignment( 4 ) 
-    self.ChapterLabel:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ) ) )
+    self.ChapterLabel:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ), "SourceScheme" ) )
     
     self.ChapterNameLabel = vgui.Create( "DLabel", self )
     self.ChapterNameLabel:SetPos( 0, 20 )
     self.ChapterNameLabel:SetSize( 172, 20 )
-    self.ChapterNameLabel:SetFont( "UiBold" )
+    self.ChapterNameLabel:SetFont( HL2Scheme.GetFont( "UiBold", "UiBold", "SourceScheme" ) )
     self.ChapterNameLabel:SetText( "NAME" )
     self.ChapterNameLabel:SetContentAlignment( 4 )
-    self.ChapterNameLabel:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ) ) )
+    self.ChapterNameLabel:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ), "SourceScheme" ) )
     
     self.LevelPicBorder = vgui.Create( "Panel", self )
     self.LevelPicBorder:SetPos( 0, 40 )
     self.LevelPicBorder:SetSize( 168, 106 )
     self.LevelPicBorder.Paint = function( s, w, h )
-        surface.SetDrawColor( s.Color or HL2Scheme.GetColor( "NewGame.FillColor", Color( 0, 0, 0, 255 ) ) )
+        surface.SetDrawColor( s.Color or HL2Scheme.GetColor( "NewGame.FillColor", Color( 0, 0, 0, 255 ), "SourceScheme" ) )
         surface.DrawRect( 0, 0, w, h )
     end
     
@@ -83,9 +83,9 @@ function CHAPTER_PANEL:SetData( data )
 end
 
 function CHAPTER_PANEL:SetSelected( bSelected )
-    local textColor = HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ) )
-    local selColor = HL2Scheme.GetColor( "NewGame.SelectionColor", Color( 255, 155, 0, 255 ) )
-    local fillColor = HL2Scheme.GetColor( "NewGame.FillColor", Color( 0, 0, 0, 255 ) )
+    local textColor = HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ), "SourceScheme" )
+    local selColor = HL2Scheme.GetColor( "NewGame.SelectionColor", Color( 255, 155, 0, 255 ), "SourceScheme" )
+    local fillColor = HL2Scheme.GetColor( "NewGame.FillColor", Color( 0, 0, 0, 255 ), "SourceScheme" )
 
     if ( bSelected ) then
         self.LevelPicBorder.Color = selColor
@@ -117,9 +117,9 @@ function PANEL:Init()
     div1:SetPos( 24, 34 ) -- Matches .res (was 44)
     div1:SetSize( 548, 2 )
     div1.Paint = function( s, w, h ) 
-        surface.SetDrawColor( HL2Scheme.GetColor("Border.Dark", Color(0,0,0,100)) )
+        surface.SetDrawColor( HL2Scheme.GetColor("Border.Dark", Color(0,0,0,100), "SourceScheme") )
         surface.DrawRect( 0, 0, w, 1 )
-        surface.SetDrawColor( HL2Scheme.GetColor("Border.Bright", Color(255,255,255,50)) )
+        surface.SetDrawColor( HL2Scheme.GetColor("Border.Bright", Color(255,255,255,50), "SourceScheme") )
         surface.DrawRect( 0, 1, w, 1 )
     end
     
@@ -127,9 +127,9 @@ function PANEL:Init()
     div2:SetPos( 24, 236 )
     div2:SetSize( 548, 2 )
     div2.Paint = function( s, w, h ) 
-        surface.SetDrawColor( HL2Scheme.GetColor("Border.Dark", Color(0,0,0,100)) )
+        surface.SetDrawColor( HL2Scheme.GetColor("Border.Dark", Color(0,0,0,100), "SourceScheme") )
         surface.DrawRect( 0, 0, w, 1 )
-        surface.SetDrawColor( HL2Scheme.GetColor("Border.Bright", Color(255,255,255,50)) )
+        surface.SetDrawColor( HL2Scheme.GetColor("Border.Bright", Color(255,255,255,50), "SourceScheme") )
         surface.DrawRect( 0, 1, w, 1 )
     end
     
@@ -203,14 +203,14 @@ end
 
 function PANEL:NextPage()
     if ( (self.CurrentIndex + 2) < #chapters ) then
-        self.CurrentIndex = self.CurrentIndex + 3
+        self.CurrentIndex = self.CurrentIndex + 1
         self:UpdateChapters()
     end
 end
 
 function PANEL:PrevPage()
     if ( self.CurrentIndex > 1 ) then
-        self.CurrentIndex = self.CurrentIndex - 3
+        self.CurrentIndex = self.CurrentIndex - 1
         self:UpdateChapters()
     end
 end

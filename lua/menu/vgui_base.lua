@@ -13,10 +13,10 @@ end
 
 function PANEL:Paint( w, h )
     -- Background
-    local bgColor = HL2Scheme.GetColor( "Frame.BgColor", Color( 0, 0, 0, 196 ) )
+    local bgColor = HL2Scheme.GetColor( "Frame.BgColor", Color( 0, 0, 0, 196 ), "SourceScheme" )
     
     if ( self.IsActive and !self:IsActive() ) then
-        bgColor = HL2Scheme.GetColor( "Frame.OutOfFocusBgColor", bgColor )
+        bgColor = HL2Scheme.GetColor( "Frame.OutOfFocusBgColor", bgColor, "SourceScheme" )
     end
 
     -- Draw rounded background (Corner radius usually 8-10 in Source)
@@ -24,8 +24,10 @@ function PANEL:Paint( w, h )
     
     -- Border
     -- Source frames usually have a border color
-    local borderColor = HL2Scheme.GetColor( "Frame.AutoSelectionBoxColor", Color( 255, 255, 255, 20 ) )
-    if ( HL2Scheme.Colors["Border.Bright"] ) then borderColor = HL2Scheme.Colors["Border.Bright"] end
+    local borderColor = HL2Scheme.GetColor( "Frame.AutoSelectionBoxColor", Color( 255, 255, 255, 20 ), "SourceScheme" )
+    -- Check if Border.Bright exists in SourceScheme
+    local bright = HL2Scheme.GetColor( "Border.Bright", nil, "SourceScheme" )
+    if ( bright ) then borderColor = bright end
     
     -- We can't easily draw a rounded outline with standard surface functions without a texture or poly
     -- For now, we'll draw a rectangular outline which is "close enough" or try to be clever
@@ -43,13 +45,10 @@ function PANEL:Paint( w, h )
         -- Use the scheme-defined title font (usually UiBold or DefaultLarge)
         -- User requested "same size as normal thing but bold", which matches UiBold.
         -- SourceScheme.res sometimes defines it as DefaultLarge (too big). We force UiBold if available.
-        local font = "UiBold"
-        if ( !HL2Scheme.Fonts[font] ) then
-            font = HL2Scheme.GetFont( "FrameTitleBar.Font", "DefaultBold" )
-        end
+        local font = HL2Scheme.GetFont( "UiBold", "DefaultBold", "SourceScheme" )
         
         surface.SetFont( font )
-        surface.SetTextColor( HL2Scheme.GetColor( "FrameTitleBar.TextColor", Color( 255, 255, 255 ) ) )
+        surface.SetTextColor( HL2Scheme.GetColor( "FrameTitleBar.TextColor", Color( 255, 255, 255 ), "SourceScheme" ) )
         surface.SetTextPos( 16, 6 ) -- Adjusted inset (Frame.TitleTextInsetX is 16)
         surface.DrawText( self.TitleText )
     end
@@ -67,7 +66,7 @@ vgui.Register( "HL2Frame", PANEL, "DFrame" )
 local BUTTON = {}
 
 function BUTTON:Init()
-    self:SetFont( "Default" ) -- Default font from scheme
+    self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) ) -- Default font from scheme
     self:SetText( "" )
 end
 
@@ -77,18 +76,18 @@ function BUTTON:Paint( w, h )
     local isDisabled = !self:IsEnabled()
     
     -- Colors
-    local textColor = HL2Scheme.GetColor( "Button.TextColor", Color( 255, 255, 255 ) )
-    local bgColor = HL2Scheme.GetColor( "Button.BgColor", Color( 0, 0, 0, 0 ) )
+    local textColor = HL2Scheme.GetColor( "Button.TextColor", Color( 255, 255, 255 ), "SourceScheme" )
+    local bgColor = HL2Scheme.GetColor( "Button.BgColor", Color( 0, 0, 0, 0 ), "SourceScheme" )
     
     -- Borders
-    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 255, 255, 255, 100 ) )
-    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 0, 0, 0, 100 ) )
+    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 255, 255, 255, 100 ), "SourceScheme" )
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 0, 0, 0, 100 ), "SourceScheme" )
     
     if ( isDisabled ) then
-        textColor = HL2Scheme.GetColor( "Button.DisabledTextColor", Color( 100, 100, 100 ) )
+        textColor = HL2Scheme.GetColor( "Button.DisabledTextColor", Color( 100, 100, 100 ), "SourceScheme" )
     elseif ( isDown ) then
-        textColor = HL2Scheme.GetColor( "Button.DepressedTextColor", textColor )
-        bgColor = HL2Scheme.GetColor( "Button.DepressedBgColor", Color( 0, 0, 0, 200 ) )
+        textColor = HL2Scheme.GetColor( "Button.DepressedTextColor", textColor, "SourceScheme" )
+        bgColor = HL2Scheme.GetColor( "Button.DepressedBgColor", Color( 0, 0, 0, 200 ), "SourceScheme" )
         -- Depressed: Dark Top/Left, Light Bottom/Right
         surface.SetDrawColor( bgColor )
         surface.DrawRect( 0, 0, w, h )

@@ -1,16 +1,14 @@
 if ( SERVER ) then return end
 
 HL2Scheme = {}
-HL2Scheme.Colors = {}
-HL2Scheme.Fonts = {}
-HL2Scheme.Settings = {}
+HL2Scheme.Schemes = {}
 
-local function ParseColor( str )
+local function ParseColor( str, contextColors )
     if ( !str ) then return nil end
     
-    -- Check if it's a reference to an existing color
-    if ( HL2Scheme.Colors[str] ) then
-        return HL2Scheme.Colors[str]
+    -- Check if it's a reference to an existing color in this scheme
+    if ( contextColors and contextColors[str] ) then
+        return contextColors[str]
     end
 
     local r, g, b, a = str:match( "(%d+)%s+(%d+)%s+(%d+)%s+(%d+)" )
@@ -224,78 +222,70 @@ local function LoadSchemeFile( filename )
     return data
 end
 
-function HL2Scheme.Load()
-    local data = LoadSchemeFile( "SourceScheme.res" )
+function HL2Scheme.LoadSchemeFromFile( filename, schemeName )
+    local data = LoadSchemeFile( filename )
+    if ( !data ) then return end
     
     -- If the root is "Scheme", go inside
     if ( data.Scheme ) then data = data.Scheme end
     
+    local schemeData = {
+        Colors = {},
+        Fonts = {},
+        Settings = {}
+    }
+    
     -- 1. Parse Colors
-    if ( data.Colors ) then
+    if ( data.Colors and istable(data.Colors) ) then
         for k, v in pairs( data.Colors ) do
-            local col = ParseColor( v )
+            local col = ParseColor( v, schemeData.Colors )
             if ( col ) then
-                HL2Scheme.Colors[k] = col
+                schemeData.Colors[k] = col
             end
         end
     end
     
-    -- 2. Parse BaseSettings (Logical colors and other settings)
-    if ( data.BaseSettings ) then
+    -- 2. Parse BaseSettings
+    if ( data.BaseSettings and istable(data.BaseSettings) ) then
         for k, v in pairs( data.BaseSettings ) do
-            local col = ParseColor( v )
+            local col = ParseColor( v, schemeData.Colors )
             if ( col ) then
-                HL2Scheme.Settings[k] = col
+                schemeData.Settings[k] = col
             else
-                -- Store raw value (e.g. font names, numbers)
-                HL2Scheme.Settings[k] = v
+                schemeData.Settings[k] = v
             end
         end
     end
     
     -- 3. Parse Fonts
-    if ( data.Fonts ) then
+    if ( data.Fonts and istable(data.Fonts) ) then
         local screenH = ScrH()
         
         for fontName, fontDefs in pairs( data.Fonts ) do
-            -- Find the best match for current resolution
+            if ( !istable(fontDefs) ) then continue end
             local bestDef = nil
-            
             for _, def in pairs( fontDefs ) do
                 if ( istable(def) ) then
-                    -- Check yres
                     local minRes = tonumber( def.yres and def.yres:match( "(%d+)%s+%d+" ) or 0 )
                     local maxRes = tonumber( def.yres and def.yres:match( "%d+%s+(%d+)" ) or 99999 )
-                    
                     if ( !minRes ) then minRes = 0 end
                     if ( !maxRes ) then maxRes = 99999 end
                     
                     if ( screenH >= minRes and screenH <= maxRes ) then
                         bestDef = def
-                        break -- Found a match for our resolution
+                        break
                     end
-                    
-                    -- Fallback to the first one if we haven't found one yet
                     if ( !bestDef ) then bestDef = def end
                 end
             end
             
             if ( bestDef ) then
-                local flags = 0
-                if ( tobool( bestDef.italic ) ) then flags = bit.bor( flags, 0x002 ) end -- ITALIC
-                if ( tobool( bestDef.underline ) ) then flags = bit.bor( flags, 0x004 ) end -- UNDERLINE
-                if ( tobool( bestDef.strikeout ) ) then flags = bit.bor( flags, 0x008 ) end -- STRIKEOUT
-                if ( tobool( bestDef.symbol ) ) then flags = bit.bor( flags, 0x010 ) end -- SYMBOL
-                if ( tobool( bestDef.antialias ) ) then flags = bit.bor( flags, 0x020 ) end -- ANTIALIAS
-                if ( tobool( bestDef.blur ) ) then flags = bit.bor( flags, 0x040 ) end -- BLUR
-                if ( tobool( bestDef.outline ) ) then flags = bit.bor( flags, 0x080 ) end -- OUTLINE
-                if ( tobool( bestDef.dropshadow ) ) then flags = bit.bor( flags, 0x100 ) end -- SHADOW
-                
-                -- Handle "name" being a table (sometimes happens in KeyValuesToTable if multiple names?)
-                -- Usually it's a string.
                 local face = bestDef.name or "Tahoma"
                 
-                surface.CreateFont( fontName, {
+                -- PREFIX THE FONT NAME
+                local uniqueFontName = schemeName .. "_" .. fontName
+                
+                surface.CreateFont( uniqueFontName, {
                     font = face,
                     size = tonumber(bestDef.tall) or 16,
                     weight = tonumber(bestDef.weight) or 400,
@@ -312,45 +302,51 @@ function HL2Scheme.Load()
                     underline = tobool(bestDef.underline),
                     strikeout = tobool(bestDef.strikeout),
                 } )
-                
-                HL2Scheme.Fonts[fontName] = true
+                schemeData.Fonts[fontName] = uniqueFontName
             end
         end
     end
     
-    print( "[HL2Scheme] Loaded SourceScheme.res with " .. table.Count(HL2Scheme.Fonts) .. " fonts" )
-    
-    -- Fallback for critical fonts if they failed to load
-    if ( !HL2Scheme.Fonts["DefaultBold"] ) then
-        surface.CreateFont( "DefaultBold", { font = "Tahoma", size = 13, weight = 1000, antialias = true } )
-        print( "[HL2Scheme] Created fallback DefaultBold" )
-    end
-    if ( !HL2Scheme.Fonts["Default"] ) then
-        surface.CreateFont( "Default", { font = "Tahoma", size = 13, weight = 500, antialias = true } )
-        print( "[HL2Scheme] Created fallback Default" )
-    end
+    HL2Scheme.Schemes[schemeName] = schemeData
+    print( "[HL2Scheme] Loaded " .. filename .. " as " .. schemeName )
 end
 
-function HL2Scheme.GetColor( name, default )
-    -- Check Settings first (Logical names like "Border.Bright")
-    if ( HL2Scheme.Settings[name] ) then return HL2Scheme.Settings[name] end
-    -- Then raw Colors
-    if ( HL2Scheme.Colors[name] ) then return HL2Scheme.Colors[name] end
+function HL2Scheme.GetColor( name, default, schemeName )
+    schemeName = schemeName or "ClientScheme"
+    local scheme = HL2Scheme.Schemes[schemeName]
+    if ( !scheme ) then return default or Color(255,255,255) end
+    
+    if ( scheme.Settings[name] and IsColor(scheme.Settings[name]) ) then return scheme.Settings[name] end
+    if ( scheme.Colors[name] ) then return scheme.Colors[name] end
     
     return default or Color( 255, 255, 255 )
 end
 
-function HL2Scheme.GetFont( name, default )
-    -- 1. Check if 'name' is a setting key that points to a font (e.g. "FrameTitleBar.Font" -> "UiBold")
-    local settingValue = HL2Scheme.Settings[name]
-    if ( settingValue and HL2Scheme.Fonts[settingValue] ) then
-        return settingValue
-    end
+function HL2Scheme.GetFont( name, default, schemeName )
+    schemeName = schemeName or "ClientScheme"
+    local scheme = HL2Scheme.Schemes[schemeName]
+    if ( !scheme ) then return default end
 
-    -- 2. Check if 'name' is directly a valid font name
-    if ( HL2Scheme.Fonts[name] ) then return name end
+    -- Check if name is a setting key (e.g. "MainMenuFont")
+    local settingValue = scheme.Settings[name]
+    if ( settingValue and scheme.Fonts[settingValue] ) then
+        return scheme.Fonts[settingValue]
+    end
     
-    return default or "Default"
+    -- Check if name is a font name directly
+    if ( scheme.Fonts[name] ) then return scheme.Fonts[name] end
+    
+    return default
 end
 
-HL2Scheme.Load()
+function HL2Scheme.GetResourceString( name, default, schemeName )
+    schemeName = schemeName or "ClientScheme"
+    local scheme = HL2Scheme.Schemes[schemeName]
+    if ( !scheme ) then return default end
+    return scheme.Settings[name] or default
+end
+
+-- Load standard schemes
+HL2Scheme.LoadSchemeFromFile( "SourceScheme.res", "SourceScheme" )
+HL2Scheme.LoadSchemeFromFile( "ClientScheme.res", "ClientScheme" )
+
