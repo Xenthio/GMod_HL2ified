@@ -23,7 +23,17 @@ if (!(Test-Path $BuildPath)) {
 
 # wipe directory contents
 Get-ChildItem -Path $BuildPath | ForEach-Object {
-    Remove-Item -Path $_.FullName -Recurse -Force
+    if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
+        # Inside garrysmod, delete everything EXCEPT saves and cache
+        Get-ChildItem -Path $_.FullName | ForEach-Object {
+            if ($_.Name -ne "saves" -and $_.Name -ne "cache") {
+                Remove-Item -Path $_.FullName -Recurse -Force
+            }
+        }
+    } else {
+        # Delete everything else in root
+        Remove-Item -Path $_.FullName -Recurse -Force
+    }
 }
 
 # 2. Symlink Engine Files (The "Skeleton")
@@ -101,6 +111,15 @@ $destScenes = Join-Path $BuildGModPath "scenes"
 if (Test-Path $srcScenes) {
     Copy-Item -Path $srcScenes -Destination $destScenes -Recurse -Force
     Write-Host "    -> Copied scenes folder"
+}
+
+# 3.7 copy particles
+Write-Host "[*] Copying base particles..."
+$srcParticles = Join-Path $GModPath "garrysmod\particles"
+$destParticles = Join-Path $BuildGModPath "particles"
+if (Test-Path $srcParticles) {
+    Copy-Item -Path $srcParticles -Destination $destParticles -Recurse -Force
+    Write-Host "    -> Copied particles folder"
 }
 
 # 3.8 Copy Essential Resources Only
