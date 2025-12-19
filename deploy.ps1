@@ -40,9 +40,9 @@ Get-ChildItem -Path $BuildPath | ForEach-Object {
             if ($_.Name -eq "saves" -or $_.Name -eq "cache") {
                 # Keep these folders
             } elseif ($_.Name -eq "cfg" -and $_.PSIsContainer) {
-                # Inside cfg, keep autoexec.cfg and addonnomount.cfg
+                # Inside cfg, keep autoexec.cfg and addonnomount.txt
                 Get-ChildItem -Path $_.FullName | ForEach-Object {
-                    if ($_.Name -ne "autoexec.cfg" -and $_.Name -ne "addonnomount.cfg") {
+                    if ($_.Name -ne "autoexec.cfg" -and $_.Name -ne "addonnomount.txt") {
                         Remove-Item -Path $_.FullName -Recurse -Force
                     }
                 }
