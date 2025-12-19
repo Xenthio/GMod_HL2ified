@@ -6,6 +6,9 @@ include( "skins/hl2.lua" )
 include( "vgui_base.lua" )
 include( "newgamedialog.lua" )
 
+-- Global dialog handles
+g_QuitDialog = nil
+
 -- ModInfo
 local ModInfo = { Title = "HALF-LIFE'", Title2 = "" }
 local function LoadModInfo()
@@ -34,6 +37,31 @@ local SAVE_COMPLETION_DELAY = 0.5 -- Time in seconds to wait for save to complet
 -- Helper function to check if a map is a background map
 local function IsBackgroundMap( mapName )
     return BACKGROUND_MAPS[mapName] == true
+end
+
+-- Helper function to check if currently in a real game (not background map)
+local function IsInRealGame()
+    local inGame = IsInGame()
+    if ( inGame and game.GetMap ) then
+        if ( IsBackgroundMap( game.GetMap() ) ) then
+            inGame = false
+        end
+    end
+    return inGame
+end
+
+-- Helper function to check if in a single player game
+local function IsSinglePlayerGame()
+    if ( !IsInRealGame() ) then return false end
+    
+    local maxPlayers = 1
+    if ( game.MaxPlayers ) then
+        maxPlayers = game.MaxPlayers()
+    elseif ( GetMaxPlayers ) then
+        maxPlayers = GetMaxPlayers()
+    end
+    
+    return maxPlayers == 1
 end
 
 -- Helper for proportional scaling (Source engine standard is based on 480 height)
@@ -323,9 +351,15 @@ function SAVE_QUIT_PANEL:OnSaveAndQuit()
     local saveName = "autosave_quit"
     RunConsoleCommand( "save", saveName )
     
+    -- Store reference for timer validation
+    local dialogRef = self
+    
     -- Small delay to allow save to complete
     timer.Simple( SAVE_COMPLETION_DELAY, function()
-        RunConsoleCommand( "quit" )
+        -- Only quit if the dialog is still valid (wasn't closed/removed)
+        if ( IsValid( dialogRef ) ) then
+            RunConsoleCommand( "quit" )
+        end
     end )
     
     self:Close()
@@ -381,14 +415,7 @@ function PANEL:ApplySchemeSettings()
 end
 
 function PANEL:UpdateMenuItemState()
-    local inGame = IsInGame()
-    
-    -- Hack: If we are on a background map, treat as not in game
-    if ( inGame and game.GetMap ) then
-        if ( IsBackgroundMap( game.GetMap() ) ) then
-            inGame = false
-        end
-    end
+    local inGame = IsInRealGame()
 
     local maxPlayers = 1
     if ( game.MaxPlayers ) then
@@ -607,30 +634,11 @@ local function CreateMainMenu()
 end
 
 function OpenQuitConfirmationDialog()
-    local inGame = IsInGame()
-    
-    -- Check if we are on a background map
-    if ( inGame and game.GetMap ) then
-        if ( IsBackgroundMap( game.GetMap() ) ) then
-            inGame = false
-        end
-    end
-    
-    -- Check if this is a single player game
-    local maxPlayers = 1
-    if ( game.MaxPlayers ) then
-        maxPlayers = game.MaxPlayers()
-    elseif ( GetMaxPlayers ) then
-        maxPlayers = GetMaxPlayers()
-    end
-    
-    local isSinglePlayer = inGame and ( maxPlayers == 1 )
-    
     if ( IsValid( g_QuitDialog ) ) then 
         g_QuitDialog:Remove() 
     end
     
-    if ( isSinglePlayer ) then
+    if ( IsSinglePlayerGame() ) then
         -- Show save & quit dialog for single player games
         g_QuitDialog = vgui.Create( "CSaveBeforeQuitDialog" )
     else
