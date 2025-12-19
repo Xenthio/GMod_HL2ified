@@ -126,6 +126,9 @@ vgui.Register( "CGameChapterPanel", CHAPTER_PANEL, "DPanel" )
 local PANEL = {}
 
 function PANEL:Init()
+    self.BaseClass.Init( self )
+    self:SetMinimizeEnabled( false )
+    self:SetMaximizeEnabled( false )
     self:SetSize( 600, 296 )
     self:Center()
     self:MakePopup()

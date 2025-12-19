@@ -130,6 +130,15 @@ function SKIN:PaintButton( panel, w, h )
     local textColor = HL2Scheme.GetColor( "Button.TextColor", Color( 255, 255, 255 ), "SourceScheme" )
     local bgColor = HL2Scheme.GetColor( "Button.BgColor", Color( 0, 0, 0, 0 ), "SourceScheme" )
     
+    if ( panel.IsTitleButton ) then
+        textColor = HL2Scheme.GetColor( "FrameTitleButton.FgColor", Color( 200, 200, 200, 196 ), "SourceScheme" )
+        if ( isDisabled ) then
+             textColor = HL2Scheme.GetColor( "FrameTitleButton.DisabledFgColor", Color( 255, 255, 255, 192 ), "SourceScheme" )
+        end
+        panel:SetTextColor( textColor )
+        return
+    end
+
     -- Borders
     local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 255, 255, 255, 100 ), "SourceScheme" )
     local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 0, 0, 0, 100 ), "SourceScheme" )
@@ -167,6 +176,66 @@ function SKIN:PaintButton( panel, w, h )
     end
     
     panel:SetTextColor( textColor )
+end
+
+function SKIN:PaintWindowCloseButton( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    local font = HL2Scheme.GetFont( "Marlett", "Marlett", "SourceScheme" )
+    local col = HL2Scheme.GetColor( "FrameTitleButton.FgColor", Color( 200, 200, 200, 196 ), "SourceScheme" )
+    
+    if ( panel:GetDisabled() ) then
+        col = HL2Scheme.GetColor( "FrameTitleButton.DisabledFgColor", Color( 255, 255, 255, 192 ), "SourceScheme" )
+    elseif ( panel:IsDown() ) then
+        col = Color( 255, 255, 255, 255 ) -- Brighter when pressed?
+    elseif ( panel.Hovered ) then
+        col = Color( 255, 255, 255, 255 )
+    end
+    
+    surface.SetFont( font )
+    local tw, th = surface.GetTextSize( "r" )
+    surface.SetTextPos( (w-tw)/2, (h-th)/2 )
+    surface.SetTextColor( col )
+    surface.DrawText( "r" )
+end
+
+function SKIN:PaintWindowMaximizeButton( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    local font = HL2Scheme.GetFont( "Marlett", "Marlett", "SourceScheme" )
+    local col = HL2Scheme.GetColor( "FrameTitleButton.FgColor", Color( 200, 200, 200, 196 ), "SourceScheme" )
+    
+    if ( panel:GetDisabled() ) then
+        col = HL2Scheme.GetColor( "FrameTitleButton.DisabledFgColor", Color( 255, 255, 255, 192 ), "SourceScheme" )
+    elseif ( panel:IsDown() ) then
+        col = Color( 255, 255, 255, 255 )
+    elseif ( panel.Hovered ) then
+        col = Color( 255, 255, 255, 255 )
+    end
+    
+    surface.SetFont( font )
+    local tw, th = surface.GetTextSize( "1" )
+    surface.SetTextPos( (w-tw)/2, (h-th)/2 )
+    surface.SetTextColor( col )
+    surface.DrawText( "1" )
+end
+
+function SKIN:PaintWindowMinimizeButton( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    local font = HL2Scheme.GetFont( "Marlett", "Marlett", "SourceScheme" )
+    local col = HL2Scheme.GetColor( "FrameTitleButton.FgColor", Color( 200, 200, 200, 196 ), "SourceScheme" )
+    
+    if ( panel:GetDisabled() ) then
+        col = HL2Scheme.GetColor( "FrameTitleButton.DisabledFgColor", Color( 255, 255, 255, 192 ), "SourceScheme" )
+    elseif ( panel:IsDown() ) then
+        col = Color( 255, 255, 255, 255 )
+    elseif ( panel.Hovered ) then
+        col = Color( 255, 255, 255, 255 )
+    end
+    
+    surface.SetFont( font )
+    local tw, th = surface.GetTextSize( "0" )
+    surface.SetTextPos( (w-tw)/2, (h-th)/2 )
+    surface.SetTextColor( col )
+    surface.DrawText( "0" )
 end
 
 derma.DefineSkin( "HL2", "Half-Life 2 VGUI Skin", SKIN )
