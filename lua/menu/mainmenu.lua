@@ -354,7 +354,9 @@ function SAVE_QUIT_PANEL:OnSaveAndQuit()
     -- Store reference for timer validation
     local dialogRef = self
     
-    -- Small delay to allow save to complete
+    -- Small delay to allow save to complete before quitting
+    -- Note: GMod's save command is fire-and-forget, so we can't check for success
+    -- The delay gives the save operation time to complete in most cases
     timer.Simple( SAVE_COMPLETION_DELAY, function()
         -- Only quit if the dialog is still valid (wasn't closed/removed)
         if ( IsValid( dialogRef ) ) then
