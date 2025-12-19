@@ -114,7 +114,7 @@ function PANEL:OnCursorEntered()
 end
 
 function PANEL:DoClick()
-    surface.PlaySound( "UI/buttonclick.wav" )
+    surface.PlaySound( "UI/buttonclickrelease.wav" )
     
     local cmd = self.Command
     if ( !cmd ) then return end
