@@ -33,19 +33,27 @@ if (!(Test-Path $BuildPath)) {
 }
 
 # wipe directory contents
+# Preserve common user-data folders using case-insensitive lookup.
+# GMod/user content sometimes uses singular/plural variants (e.g., save/saves, download/downloads), so keep both to avoid accidental deletion.
+$preserveGarrysmodItems = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+@(
+    "saves", "save",
+    "cache",
+    "data",
+    "download", "downloads",
+    "cfg",   # keep full cfg so all user configs (autoexec.cfg, addonnomount.txt, etc.) remain intact
+    "addons",
+    "dupes",
+    "demos",
+    "screenshots"
+) | ForEach-Object { [void]$preserveGarrysmodItems.Add($_) }
+$logPrefix = "    ->"
 Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
-        # Inside garrysmod, delete everything EXCEPT saves, cache, and specific configs
+        # Inside garrysmod, delete everything EXCEPT preserved user data folders (saves, cache, data, downloads, cfg, addons, etc.)
         Get-ChildItem -Path $_.FullName | ForEach-Object {
-            if ($_.Name -eq "saves" -or $_.Name -eq "cache") {
-                # Keep these folders
-            } elseif ($_.Name -eq "cfg" -and $_.PSIsContainer) {
-                # Inside cfg, keep autoexec.cfg and addonnomount.txt
-                Get-ChildItem -Path $_.FullName | ForEach-Object {
-                    if ($_.Name -ne "autoexec.cfg" -and $_.Name -ne "addonnomount.txt") {
-                        Remove-Item -Path $_.FullName -Recurse -Force
-                    }
-                }
+            if ($preserveGarrysmodItems.Contains($_.Name)) {
+                Write-Host "$logPrefix Preserving $($_.Name)"
             } else {
                 Remove-Item -Path $_.FullName -Recurse -Force
             }
