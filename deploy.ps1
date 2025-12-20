@@ -33,24 +33,25 @@ if (!(Test-Path $BuildPath)) {
 }
 
 # wipe directory contents
-# Preserve common user-data folders.
+# Preserve common user-data folders using case-insensitive lookup.
 # GMod/user content sometimes uses singular/plural variants (e.g., save/saves, download/downloads), so keep both to avoid accidental deletion.
-$preserveGarrysmodItems = @(
+$preserveGarrysmodItems = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+@(
     "saves", "save",
     "cache",
     "data",
     "download", "downloads",
-    "cfg",   # keep full cfg so user bindings persist; mod copy step still merges cfg and skips autoexec.cfg to avoid conflicts
+    "cfg",   # keep full cfg so user bindings persist; mod copy step still merges cfg and skips autoexec.cfg (see cfg handling below)
     "addons",
     "dupes",
     "demos",
     "screenshots"
-)
+) | ForEach-Object { [void]$preserveGarrysmodItems.Add($_) }
 Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
         # Inside garrysmod, delete everything EXCEPT user data and config folders
         Get-ChildItem -Path $_.FullName | ForEach-Object {
-            if ($preserveGarrysmodItems -icontains $_.Name) {
+            if ($preserveGarrysmodItems.Contains($_.Name)) {
                 Write-Host "    -> Preserving $($_.Name)"
             } else {
                 Remove-Item -Path $_.FullName -Recurse -Force
