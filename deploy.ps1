@@ -40,7 +40,7 @@ $preserveGarrysmodItems = @(
     "cache",
     "data",
     "download", "downloads",
-    "cfg",   # keep full cfg to avoid wiping user bindings; mod copy step later avoids overwriting autoexec.cfg
+    "cfg",   # keep full cfg so user bindings persist; mod copy step still merges cfg and skips autoexec.cfg to avoid conflicts
     "addons",
     "dupes",
     "demos",
