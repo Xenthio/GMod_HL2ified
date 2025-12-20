@@ -229,6 +229,21 @@ function GM:PlayerSpawn(ply)
 	
 	self.BaseClass:PlayerSpawn(ply)
 
+	-- On background maps, make player completely invisible and non-collidable
+	-- Multiple methods are used for redundancy across different rendering paths:
+	-- - SetNoDraw: Hides the player entity from being drawn
+	-- - SetNotSolid: Prevents collisions with the invisible player
+	-- - DrawShadow: Disables shadow rendering
+	-- - SetRenderMode: Sets rendering mode to none
+	-- - EF_NODRAW: Engine flag to prevent drawing (works in some cases where SetNoDraw doesn't)
+	if IsBackgroundMap() then
+		ply:SetNoDraw( true )
+		ply:SetNotSolid( true )
+		ply:DrawShadow( false )
+		ply:SetRenderMode( RENDERMODE_NONE )
+		ply:AddEffects( EF_NODRAW )
+	end
+
 	if ply.RestoreVelocity then
 		-- Apply velocity after a short delay to ensure physics are ready
 		local vel = ply.RestoreVelocity

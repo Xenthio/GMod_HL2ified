@@ -115,7 +115,7 @@ function GM:CalcView( ply, origin, angles, fov )
 	return view
 end
 
--- Never draw local player in third person (prevents death cam showing player model)
+-- Never draw local player in first-person view (prevents death cam showing player model)
 function GM:ShouldDrawLocalPlayer( ply )
 	return false
 end
@@ -123,6 +123,11 @@ end
 -- Hide viewmodel on death
 function GM:PreDrawViewModel( vm, ply, weapon )
 	if IsDead or not ply:Alive() or ply:Health() <= 0 then
+		return true -- Don't draw
+	end
+	
+	-- Hide viewmodel on background maps
+	if IsBackgroundMap() then
 		return true -- Don't draw
 	end
 end
