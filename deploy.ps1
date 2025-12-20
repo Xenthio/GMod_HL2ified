@@ -33,7 +33,18 @@ if (!(Test-Path $BuildPath)) {
 }
 
 # wipe directory contents
-$preserveGarrysmodItems = @("saves", "save", "cache", "data", "download", "downloads", "cfg", "addons", "dupes", "demos", "screenshots")
+# Preserve common user-data folders (include singular/plural variants used by GMod/downloads)
+$preserveGarrysmodItems = @(
+    "saves", "save",
+    "cache",
+    "data",
+    "download", "downloads",
+    "cfg",   # keep full cfg to avoid wiping user bindings; project cfg files overwrite as needed
+    "addons",
+    "dupes",
+    "demos",
+    "screenshots"
+)
 Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
         # Inside garrysmod, delete everything EXCEPT user data and config folders
