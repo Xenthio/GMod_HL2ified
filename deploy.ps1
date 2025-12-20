@@ -40,7 +40,7 @@ $preserveGarrysmodItems = @(
     "cache",
     "data",
     "download", "downloads",
-    "cfg",   # keep full cfg to avoid wiping user bindings; copy step later still skips autoexec.cfg
+    "cfg",   # keep full cfg to avoid wiping user bindings; copy step later still avoids overwriting autoexec.cfg
     "addons",
     "dupes",
     "demos",
@@ -50,7 +50,7 @@ Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
         # Inside garrysmod, delete everything EXCEPT user data and config folders
         Get-ChildItem -Path $_.FullName | ForEach-Object {
-            if ($preserveGarrysmodItems -contains $_.Name) {
+            if ($preserveGarrysmodItems -icontains $_.Name) {
                 Write-Host "    -> Preserving $($_.Name)"
             } else {
                 Remove-Item -Path $_.FullName -Recurse -Force
