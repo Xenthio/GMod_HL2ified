@@ -113,13 +113,9 @@ function PANEL:Think()
     
     -- HL2 doesn't use the sizeall cursor for moving windows
     -- Override cursor after parent Think runs
-    
-	local mousex = math.Clamp( gui.MouseX(), 1, ScrW() - 1 )
-	local mousey = math.Clamp( gui.MouseY(), 1, ScrH() - 1 )
-	local screenX, screenY = self:LocalToScreen( 0, 0 )
-	if ( self.Hovered && self:GetDraggable() && mousey < ( screenY + 24 ) ) then
-		self:SetCursor( "arrow" )
-	end
+    if ( !self.Sizing and !self.Dragging ) then
+        self:SetCursor( "arrow" )
+    end
     
     -- Force layout if not done (fix for buttons at 0,0)
     if ( !self.LayoutDone ) then
