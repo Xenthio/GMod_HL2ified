@@ -5,6 +5,14 @@ AddCSLuaFile("player_class.lua")
 
 include("shared.lua")
 
+-- Helper function to check if we're on a background map
+local function IsBackgroundMap()
+	local map = game.GetMap()
+	return map == "background01" or map == "background02" or map == "background03" or 
+	       map == "background04" or map == "background05" or map == "background06" or 
+	       map == "background07"
+end
+
 -- ConVar for load last save on death (off by default)
 local cv_loadlastsave = CreateConVar( "campaign_load_last_save", "0", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Load last save on death instead of respawning" )
 
@@ -228,6 +236,24 @@ function GM:PlayerSpawn(ply)
 	player_manager.SetPlayerClass( ply, "player_campaign" )
 	
 	self.BaseClass:PlayerSpawn(ply)
+
+	-- On background maps, make player completely invisible and non-collidable
+	if IsBackgroundMap() then
+		ply:SetNoDraw( true )
+		ply:SetNotSolid( true )
+		ply:DrawShadow( false )
+		-- Also set render mode to none for extra safety
+		ply:SetRenderMode( RENDERMODE_NONE )
+		-- Don't draw the player's worldmodel either
+		ply:AddEffects( EF_NODRAW )
+	else
+		-- Ensure normal visibility on regular maps
+		ply:SetNoDraw( false )
+		ply:SetNotSolid( false )
+		ply:DrawShadow( true )
+		ply:SetRenderMode( RENDERMODE_NORMAL )
+		ply:RemoveEffects( EF_NODRAW )
+	end
 
 	if ply.RestoreVelocity then
 		-- Apply velocity after a short delay to ensure physics are ready

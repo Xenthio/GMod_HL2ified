@@ -5,6 +5,14 @@ function GM:Initialize()
 	print("[Campaign] Client Initialized")
 end
 
+-- Helper function to check if we're on a background map
+local function IsBackgroundMap()
+	local map = game.GetMap()
+	return map == "background01" or map == "background02" or map == "background03" or 
+	       map == "background04" or map == "background05" or map == "background06" or 
+	       map == "background07"
+end
+
 --
 -- Load save hint (GMod blocks 'load' command from Lua, so we show a hint)
 --
@@ -104,6 +112,14 @@ function GM:CalcView( ply, origin, angles, fov )
 	view.fov = fov
 	view.drawviewer = false
 	
+	-- On background maps, ensure camera is at proper position
+	if IsBackgroundMap() then
+		-- For background maps, the camera should be at the info_player_start position
+		-- or a fixed position. The game will handle this, so we don't override.
+		-- However, we make sure not to offset the camera.
+		return view
+	end
+	
 	-- If dead, keep first person at player position, allow looking around
 	if IsDead or ply:Health() <= 0 then
 		view.origin = ply:GetPos() + Vector( 0, 0, 64 )
@@ -116,7 +132,12 @@ function GM:CalcView( ply, origin, angles, fov )
 end
 
 -- Never draw local player in third person (prevents death cam showing player model)
+-- Also hide on background maps
 function GM:ShouldDrawLocalPlayer( ply )
+	-- Always hide player model on background maps
+	if IsBackgroundMap() then
+		return false
+	end
 	return false
 end
 
@@ -125,7 +146,26 @@ function GM:PreDrawViewModel( vm, ply, weapon )
 	if IsDead or not ply:Alive() or ply:Health() <= 0 then
 		return true -- Don't draw
 	end
+	
+	-- Hide viewmodel on background maps
+	if IsBackgroundMap() then
+		return true -- Don't draw
+	end
 end
+
+-- Hide player model completely on background maps
+hook.Add( "PrePlayerDraw", "HidePlayerOnBackgroundMaps", function( ply )
+	if ply == LocalPlayer() and IsBackgroundMap() then
+		return true -- Don't draw
+	end
+end )
+
+-- Also ensure player effects are hidden on background maps
+hook.Add( "PostPlayerDraw", "HidePlayerEffectsOnBackgroundMaps", function( ply )
+	if ply == LocalPlayer() and IsBackgroundMap() then
+		-- This shouldn't be called if PrePlayerDraw returns true, but just in case
+	end
+end )
 
 -- Black screen on fall death
 function GM:RenderScreenspaceEffects()
