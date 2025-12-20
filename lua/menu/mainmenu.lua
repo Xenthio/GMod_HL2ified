@@ -29,9 +29,16 @@ local BACKGROUND_MAPS = {
     ["background02"] = true,
     ["background03"] = true,
     ["background04"] = true,
-    ["background05"] = true
+    ["background05"] = true,
+    ["background06"] = true,
+    ["background07"] = true,
+    ["ep1_background01"] = true,
+    ["ep1_background02"] = true,
+    ["ep2_background01"] = true,
+    ["ep2_background02"] = true,
+    ["ep2_background03"] = true
 }
-
+    
 local SAVE_COMPLETION_DELAY = 0.5 -- Time in seconds to wait for save to complete before quitting
 
 -- Helper function to check if a map is a background map
