@@ -267,7 +267,7 @@ local SAVE_QUIT_PANEL = {}
 
 function SAVE_QUIT_PANEL:Init()
     self.BaseClass.Init( self )
-    self:SetSize( 416, 160 )
+    self:SetSize( 348, 124 )
     self:Center()
     self:MakePopup()
     
@@ -283,17 +283,17 @@ function SAVE_QUIT_PANEL:Init()
     
     -- Message Label
     self.lblMessage = vgui.Create( "DLabel", self )
-    self.lblMessage:SetPos( 24, 48 )
-    self.lblMessage:SetSize( 368, 40 )
+    self.lblMessage:SetPos( 17, 34 )
+    self.lblMessage:SetSize( 312, 42 )
     self.lblMessage:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
     
-    local messageText = language.GetPhrase( "#GameUI_QuitWithoutSavingConfirmationText" )
-    if messageText == "#GameUI_QuitWithoutSavingConfirmationText" then
+    local messageText = language.GetPhrase( "#GameUI_SaveAndQuitQuery_Info" )
+    if messageText == "#GameUI_SaveAndQuitQuery_Info" then
         messageText = "Do you want to save your game before quitting?"
     end
     self.lblMessage:SetText( messageText )
     
-    self.lblMessage:SetContentAlignment( 4 ) -- Left
+    self.lblMessage:SetContentAlignment( 7 ) -- north-west
     self.lblMessage:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ), "SourceScheme" ) )
     self.lblMessage:SetWrap( true )
     
@@ -306,8 +306,8 @@ function SAVE_QUIT_PANEL:Init()
     end
     self.btnSaveQuit:SetText( saveQuitText )
     
-    self.btnSaveQuit:SetPos( 24, 110 )
-    self.btnSaveQuit:SetSize( 120, 24 )
+    self.btnSaveQuit:SetPos( 68, 80 )
+    self.btnSaveQuit:SetSize( 72, 24 )
     self.btnSaveQuit:SetContentAlignment( 4 )
     self.btnSaveQuit.DoClick = function() 
         self:OnSaveAndQuit()
@@ -316,14 +316,14 @@ function SAVE_QUIT_PANEL:Init()
     -- Quit Button (without saving)
     self.btnQuit = vgui.Create( "HL2Button", self )
     
-    local quitText = language.GetPhrase( "#GameUI_Quit" )
-    if quitText == "#GameUI_Quit" then
-        quitText = "Quit"
+    local quitText = language.GetPhrase( "#GameUI_DontSaveAndQuit" )
+    if quitText == "#GameUI_DontSaveAndQuit" then
+        quitText = "Don't Save"
     end
     self.btnQuit:SetText( quitText )
     
-    self.btnQuit:SetPos( 231, 110 )
-    self.btnQuit:SetSize( 80, 24 )
+    self.btnQuit:SetPos( 150, 80 )
+    self.btnQuit:SetSize( 89, 24 )
     self.btnQuit:SetContentAlignment( 4 )
     self.btnQuit.DoClick = function() 
         self:OnQuit()
@@ -332,13 +332,13 @@ function SAVE_QUIT_PANEL:Init()
     -- Cancel Button
     self.btnCancel = vgui.Create( "HL2Button", self )
     
-    local cancelText = language.GetPhrase( "#GameUI_Cancel" )
-    if cancelText == "#GameUI_Cancel" then
+    local cancelText = language.GetPhrase( "#vgui_Cancel" )
+    if cancelText == "#vgui_Cancel" then
         cancelText = "Cancel"
     end
     self.btnCancel:SetText( cancelText )
     
-    self.btnCancel:SetPos( 320, 110 )
+    self.btnCancel:SetPos( 249, 80 )
     self.btnCancel:SetSize( 72, 24 )
     self.btnCancel:SetContentAlignment( 4 )
     self.btnCancel.DoClick = function() 
