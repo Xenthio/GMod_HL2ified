@@ -104,13 +104,6 @@ function GM:CalcView( ply, origin, angles, fov )
 	view.fov = fov
 	view.drawviewer = false
 	
-	-- On background maps, use the default camera positioning without modifications
-	-- This ensures the camera is positioned at the info_player_start entity location
-	-- instead of being offset based on player position
-	if IsBackgroundMap() then
-		return view
-	end
-	
 	-- If dead, keep first person at player position, allow looking around
 	if IsDead or ply:Health() <= 0 then
 		view.origin = ply:GetPos() + Vector( 0, 0, 64 )
