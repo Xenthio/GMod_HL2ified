@@ -254,7 +254,7 @@ function QUIT_PANEL:Init()
 end
 
 function QUIT_PANEL:OnQuit()
-    RunConsoleCommand( "quit" )
+    RunConsoleCommand( "gamemenucommand", "QuitNoConfirm" )
     self:Close()
 end
 
@@ -360,7 +360,7 @@ function SAVE_QUIT_PANEL:OnSaveAndQuit()
     timer.Simple( SAVE_COMPLETION_DELAY, function()
         -- Only quit if the dialog is still valid (wasn't closed/removed)
         if ( IsValid( dialogRef ) ) then
-            RunConsoleCommand( "quit" )
+            RunConsoleCommand( "gamemenucommand", "QuitNoConfirm" )
         end
     end )
     
@@ -368,7 +368,7 @@ function SAVE_QUIT_PANEL:OnSaveAndQuit()
 end
 
 function SAVE_QUIT_PANEL:OnQuit()
-    RunConsoleCommand( "quit" )
+    RunConsoleCommand( "gamemenucommand", "QuitNoConfirm" )
     self:Close()
 end
 
