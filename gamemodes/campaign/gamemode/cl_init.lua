@@ -122,13 +122,8 @@ function GM:CalcView( ply, origin, angles, fov )
 	return view
 end
 
--- Never draw local player in third person (prevents death cam showing player model)
--- Also hide on background maps
+-- Never draw local player (prevents death cam showing player model, and hides player on background maps)
 function GM:ShouldDrawLocalPlayer( ply )
-	-- Always hide player model on background maps
-	if IsBackgroundMap() then
-		return false
-	end
 	return false
 end
 
