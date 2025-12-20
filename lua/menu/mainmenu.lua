@@ -38,7 +38,7 @@ local BACKGROUND_MAPS = {
     ["ep2_background02"] = true,
     ["ep2_background03"] = true
 }
-    
+
 local SAVE_COMPLETION_DELAY = 0.5 -- Time in seconds to wait for save to complete before quitting
 
 -- Helper function to check if a map is a background map
@@ -491,7 +491,7 @@ vgui.Register( "CGameMenu", PANEL, "DPanel" )
 -- - C++ popups (Options, Load, Save, etc.) have their own dimming that we cannot control
 -- - MYSTERY: C++ dimming behavior changed overnight without code or GMod updates
 --   - Before: C++ popups opened with NO dimming
---   - After: C++ popups now dim (unknown cause - my pc handn't even been rebooted)
+--   - After: C++ popups now dim (unknown cause - my pc hadn't even been rebooted)
 --   - Attempted fixes: Checked MakePopup(), keyboard input, focus management - no correlation found
 --   - Current state: Both Lua and C++ dimming work, but stack if both dialog types open (rare edge case)
 --
