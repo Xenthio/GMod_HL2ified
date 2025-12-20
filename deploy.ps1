@@ -33,13 +33,14 @@ if (!(Test-Path $BuildPath)) {
 }
 
 # wipe directory contents
-# Preserve common user-data folders (include singular/plural variants used by GMod/downloads)
+# Preserve common user-data folders.
+# GMod/user content sometimes uses singular/plural variants (e.g., save/saves, download/downloads), so keep both to avoid accidental deletion.
 $preserveGarrysmodItems = @(
     "saves", "save",
     "cache",
     "data",
     "download", "downloads",
-    "cfg",   # keep full cfg to avoid wiping user bindings; project cfg files overwrite as needed
+    "cfg",   # keep full cfg to avoid wiping user bindings; copy step later still skips autoexec.cfg
     "addons",
     "dupes",
     "demos",
