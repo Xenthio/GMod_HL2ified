@@ -466,17 +466,38 @@ vgui.Register( "CGameMenu", PANEL, "DPanel" )
 
 --------------------------------------------------------------------------------
 -- CBasePanel
+-- 
+-- This is a Lua recreation of the Source engine's CBasePanel class that provides
+-- the main menu background and handles dialog dimming.
+--
+-- PANEL HIERARCHY:
+-- BaseGameUIPanel (Engine C++ - inaccessible, parent returns nil)
+-- ├─ MenuBasePanel (vgui.GetWorldPanel() - Lua container, IsPopup() = false)
+-- │  ├─ CBasePanel (this panel - the Lua main menu background)
+-- │  └─ NewGameDialog (Lua popups - parented to MenuBasePanel)
+-- └─ OptionsDialog, LoadDialog, etc. (C++ popups - outside Lua hierarchy)
+--
+-- DIMMING BEHAVIOR:
+-- - This panel dims (alpha 128 black overlay) when:
+--   1. ~~Console is visible~~ NOT the case anymore, that has the same out of our control dimming as c++ popups
+--   2. Any Lua popup child of MenuBasePanel is visible
+-- - C++ popups (Options, Load, Save, etc.) have their own dimming that we cannot control
+-- - MYSTERY: C++ dimming behavior changed overnight without code or GMod updates
+--   - Before: C++ popups opened with NO dimming
+--   - After: C++ popups now dim (unknown cause - my pc handn't even been rebooted)
+--   - Attempted fixes: Checked MakePopup(), keyboard input, focus management - no correlation found
+--   - Current state: Both Lua and C++ dimming work, but stack if both dialog types open (rare edge case)
+--
+-- TODO:
+-- - Figure out C++ dimming mystery
 --------------------------------------------------------------------------------
 PANEL = {}
 
 function PANEL:Init()
     self:SetSize( ScrW(), ScrH() )
     self:SetMouseInputEnabled( true )
-    self:SetKeyboardInputEnabled( true )
+    self:SetKeyboardInputEnabled( false )  -- Avoid focus conflicts with C++ panels
     self:SetPaintBackground( false )
-    
-    self:MakePopup()
-    self:SetPopupStayAtBack( true )
     
     self.GameMenu = vgui.Create( "CGameMenu", self )
     self.GameMenu:LoadGameMenu()
@@ -504,7 +525,8 @@ function PANEL:Init()
     self.FadeInTime = 0.5
 
     self:ApplySchemeSettings()
-    self:RequestFocus()
+    
+    --self:RequestFocus()
 end
 
 function PANEL:OnMousePressed( code )
@@ -619,14 +641,24 @@ function PANEL:Think()
         end
     end
     
-    -- Check for open dialogs via Focus
-    -- If something has focus that ISN'T us or our children, it's likely a dialog (Console, etc.)
+    -- Check for open dialogs by checking MenuBasePanel's children for Lua popups
+    -- C++ engine popups (Options, Load, etc.) are outside this hierarchy but dim themselves
     if ( !shouldTint ) then
-        if ( gui.IsConsoleVisible() ) then
-            shouldTint = true
-        elseif ( !self:HasHierarchicalFocus() ) then
-            shouldTint = true
-        end
+        --if ( gui.IsConsoleVisible() ) then
+        --    shouldTint = false
+        --else
+            -- Check MenuBasePanel (Lua world) for visible popup children
+            local menuBase = vgui.GetWorldPanel()
+            if ( IsValid( menuBase ) ) then
+                -- Check if any children are visible popups (matches C++ BasePanel.cpp behavior)
+                for _, child in ipairs( menuBase:GetChildren() ) do
+                    if ( IsValid( child ) and child:IsVisible() and child:IsPopup() and child != self ) then
+                        shouldTint = true
+                        break
+                    end
+                end
+            end
+        --end
     end
 
     local target = shouldTint and 128 or 0
