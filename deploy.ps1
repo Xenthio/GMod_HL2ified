@@ -41,7 +41,7 @@ $preserveGarrysmodItems = [System.Collections.Generic.HashSet[string]]::new([Sys
     "cache",
     "data",
     "download", "downloads",
-    "cfg",   # keep full cfg so user bindings persist; mod copy step still merges cfg and skips autoexec.cfg (see cfg handling below)
+    "cfg",   # keep full cfg so user bindings persist; mod copy step still merges cfg and skips autoexec.cfg to avoid conflicts
     "addons",
     "dupes",
     "demos",
@@ -49,7 +49,7 @@ $preserveGarrysmodItems = [System.Collections.Generic.HashSet[string]]::new([Sys
 ) | ForEach-Object { [void]$preserveGarrysmodItems.Add($_) }
 Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
-        # Inside garrysmod, delete everything EXCEPT user data and config folders
+        # Inside garrysmod, delete everything EXCEPT preserved user data folders (saves, cache, data, downloads, cfg, addons, etc.)
         Get-ChildItem -Path $_.FullName | ForEach-Object {
             if ($preserveGarrysmodItems.Contains($_.Name)) {
                 Write-Host "    -> Preserving $($_.Name)"
