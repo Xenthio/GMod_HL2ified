@@ -245,8 +245,11 @@ PANEL = {}
 function PANEL:Init()
     self:SetSize( ScrW(), ScrH() )
     self:SetMouseInputEnabled( true )
-    self:SetKeyboardInputEnabled( false )
+    self:SetKeyboardInputEnabled( true )
     self:SetPaintBackground( false )
+    
+    self:MakePopup()
+    self:SetPopupStayAtBack( true )
     
     self.GameMenu = vgui.Create( "CGameMenu", self )
     self.GameMenu:LoadGameMenu()
@@ -270,7 +273,15 @@ function PANEL:Init()
     self.MenuY = 248
     self.BottomBorder = 32
     
+    self.BackgroundAlpha = 0
+    self.FadeInTime = 0.5
+
     self:ApplySchemeSettings()
+    self:RequestFocus()
+end
+
+function PANEL:OnMousePressed( code )
+    self:RequestFocus()
 end
 
 function PANEL:ApplySchemeSettings()
@@ -280,6 +291,9 @@ function PANEL:ApplySchemeSettings()
     self.MenuY = tonumber( HL2Scheme.GetResourceString( "Main.Menu.Y", nil, "ClientScheme" ) ) or 248
     self.BottomBorder = tonumber( HL2Scheme.GetResourceString( "Main.BottomBorder", nil, "ClientScheme" ) ) or 32
     
+    local fadeTime = HL2Scheme.GetResourceString( "Frame.TransitionEffectTime", nil, "SourceScheme" )
+    if ( fadeTime ) then self.FadeInTime = tonumber( fadeTime ) end
+
     -- Scale
     self.MenuInset = SchemeScale( self.MenuInset )
     self.MenuX = SchemeScale( self.MenuX )
@@ -351,7 +365,7 @@ function PANEL:PerformLayout()
     end
 end
 
-function PANEL:Paint( w, h )
+function PANEL:Think()
     -- Check for game state change to update menu items
     local inGame = IsInGame()
     if ( self.LastInGame != inGame ) then
@@ -360,6 +374,43 @@ function PANEL:Paint( w, h )
             self.GameMenu:InvalidateLayout()
         end
     end
+
+    local shouldTint = false
+
+    if ( inGame ) then
+        -- Check if we are on a background map
+        local isBackground = false
+        if ( game.GetMap ) then
+            local map = game.GetMap()
+            if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
+                isBackground = true
+            end
+        end
+
+        if ( !isBackground ) then
+            shouldTint = true
+        end
+    end
+    
+    -- Check for open dialogs via Focus
+    -- If something has focus that ISN'T us or our children, it's likely a dialog (Console, etc.)
+    if ( !shouldTint ) then
+        if ( gui.IsConsoleVisible() ) then
+            shouldTint = true
+        elseif ( !self:HasHierarchicalFocus() ) then
+            shouldTint = true
+        end
+    end
+
+    local target = shouldTint and 128 or 0
+    local duration = shouldTint and (self.FadeInTime or 0.5) or 2.0
+    local speed = 255 / duration
+    
+    self.BackgroundAlpha = math.Approach( self.BackgroundAlpha or 0, target, FrameTime() * speed )
+end
+
+function PANEL:Paint( w, h )
+    local inGame = IsInGame()
 
     if ( !inGame ) then
         -- Draw Background Image
@@ -381,14 +432,14 @@ function PANEL:Paint( w, h )
             end
         end
 
-        if ( !isBackground ) then
-            -- Draw Blur
-            -- Derma_DrawBackgroundBlur( self, 0 )
-            
-            -- Draw darkened background if needed (e.g. pause menu)
-            surface.SetDrawColor( 0, 0, 0, 120 )
-            surface.DrawRect( 0, 0, w, h )
-        end
+        -- If we are in game and not on a background map, we might want to draw blur or something
+        -- But the tint is handled below
+    end
+
+    if ( self.BackgroundAlpha > 0 ) then
+        -- Draw darkened background
+        surface.SetDrawColor( 0, 0, 0, self.BackgroundAlpha )
+        surface.DrawRect( 0, 0, w, h )
     end
 end
 
