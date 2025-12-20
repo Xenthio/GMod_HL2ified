@@ -33,19 +33,13 @@ if (!(Test-Path $BuildPath)) {
 }
 
 # wipe directory contents
+$preserveGarrysmodItems = @("saves", "save", "cache", "data", "download", "downloads", "cfg", "addons", "dupes", "demos", "screenshots")
 Get-ChildItem -Path $BuildPath | ForEach-Object {
     if ($_.Name -eq "garrysmod" -and $_.PSIsContainer) {
-        # Inside garrysmod, delete everything EXCEPT saves, cache, and specific configs
+        # Inside garrysmod, delete everything EXCEPT user data and config folders
         Get-ChildItem -Path $_.FullName | ForEach-Object {
-            if ($_.Name -eq "saves" -or $_.Name -eq "cache") {
-                # Keep these folders
-            } elseif ($_.Name -eq "cfg" -and $_.PSIsContainer) {
-                # Inside cfg, keep autoexec.cfg and addonnomount.txt
-                Get-ChildItem -Path $_.FullName | ForEach-Object {
-                    if ($_.Name -ne "autoexec.cfg" -and $_.Name -ne "addonnomount.txt") {
-                        Remove-Item -Path $_.FullName -Recurse -Force
-                    }
-                }
+            if ($preserveGarrysmodItems -contains $_.Name) {
+                Write-Host "    -> Preserving $($_.Name)"
             } else {
                 Remove-Item -Path $_.FullName -Recurse -Force
             }
