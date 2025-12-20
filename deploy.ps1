@@ -41,7 +41,7 @@ $preserveGarrysmodItems = [System.Collections.Generic.HashSet[string]]::new([Sys
     "cache",
     "data",
     "download", "downloads",
-    "cfg",   # keep full cfg so user configs (including autoexec.cfg) remain intact
+    "cfg",   # keep full cfg so all user configs (autoexec.cfg, addonnomount.txt, etc.) remain intact
     "addons",
     "dupes",
     "demos",
