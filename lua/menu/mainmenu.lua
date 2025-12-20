@@ -6,6 +6,9 @@ include( "skins/hl2.lua" )
 include( "vgui_base.lua" )
 include( "newgamedialog.lua" )
 
+-- Global dialog handles
+g_QuitDialog = nil
+
 -- ModInfo
 local ModInfo = { Title = "HALF-LIFE'", Title2 = "" }
 local function LoadModInfo()
@@ -19,6 +22,47 @@ local function LoadModInfo()
     end
 end
 LoadModInfo()
+
+-- Constants
+local BACKGROUND_MAPS = {
+    ["background01"] = true,
+    ["background02"] = true,
+    ["background03"] = true,
+    ["background04"] = true,
+    ["background05"] = true
+}
+
+local SAVE_COMPLETION_DELAY = 0.5 -- Time in seconds to wait for save to complete before quitting
+
+-- Helper function to check if a map is a background map
+local function IsBackgroundMap( mapName )
+    return BACKGROUND_MAPS[mapName] == true
+end
+
+-- Helper function to check if currently in a real game (not background map)
+local function IsInRealGame()
+    local inGame = IsInGame()
+    if ( inGame and game.GetMap ) then
+        if ( IsBackgroundMap( game.GetMap() ) ) then
+            inGame = false
+        end
+    end
+    return inGame
+end
+
+-- Helper function to check if in a single player game
+local function IsSinglePlayerGame()
+    if ( !IsInRealGame() ) then return false end
+    
+    local maxPlayers = 1
+    if ( game.MaxPlayers ) then
+        maxPlayers = game.MaxPlayers()
+    elseif ( GetMaxPlayers ) then
+        maxPlayers = GetMaxPlayers()
+    end
+    
+    return maxPlayers == 1
+end
 
 -- Helper for proportional scaling (Source engine standard is based on 480 height)
 local function SchemeScale( val )
@@ -125,7 +169,7 @@ function PANEL:DoClick()
     elseif ( cmd == "ResumeGame" ) then
         gui.HideGameUI()
     elseif ( cmd == "Quit" ) then
-        RunConsoleCommand( "gamemenucommand", "Quit" ) -- Opens confirmation
+        OpenQuitConfirmationDialog()
     elseif ( cmd == "QuitNoConfirm" ) then
         RunConsoleCommand( "quit" )
     elseif ( cmd == "Disconnect" ) then
@@ -138,6 +182,197 @@ function PANEL:DoClick()
 end
 
 vgui.Register( "CGameMenuItem", PANEL, "DButton" )
+
+--------------------------------------------------------------------------------
+-- CQuitConfirmationDialog (Simple Yes/No for menu state)
+--------------------------------------------------------------------------------
+local QUIT_PANEL = {}
+
+function QUIT_PANEL:Init()
+    self.BaseClass.Init( self )
+    self:SetSize( 416, 140 )
+    self:Center()
+    self:MakePopup()
+    
+    local titleText = language.GetPhrase( "#GameUI_QuitConfirmationTitle" )
+    if titleText == "#GameUI_QuitConfirmationTitle" then
+        titleText = "Quit"
+    end
+    self:SetTitleText( titleText )
+    
+    self:SetDeleteOnClose( true )
+    self:SetMinimizeEnabled( false )
+    self:SetMaximizeEnabled( false )
+    
+    -- Message Label
+    self.lblMessage = vgui.Create( "DLabel", self )
+    self.lblMessage:SetPos( 24, 48 )
+    self.lblMessage:SetSize( 368, 40 )
+    self.lblMessage:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+    
+    local messageText = language.GetPhrase( "#GameUI_QuitConfirmationText" )
+    if messageText == "#GameUI_QuitConfirmationText" then
+        messageText = "Are you sure you want to quit?"
+    end
+    self.lblMessage:SetText( messageText )
+    
+    self.lblMessage:SetContentAlignment( 4 ) -- Left
+    self.lblMessage:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ), "SourceScheme" ) )
+    self.lblMessage:SetWrap( true )
+    
+    -- Quit Button
+    self.btnQuit = vgui.Create( "HL2Button", self )
+    
+    local quitText = language.GetPhrase( "#GameUI_Quit" )
+    if quitText == "#GameUI_Quit" then
+        quitText = "Quit"
+    end
+    self.btnQuit:SetText( quitText )
+    
+    self.btnQuit:SetPos( 231, 100 )
+    self.btnQuit:SetSize( 80, 24 )
+    self.btnQuit:SetContentAlignment( 4 )
+    self.btnQuit.DoClick = function() 
+        self:OnQuit()
+    end
+    
+    -- Cancel Button
+    self.btnCancel = vgui.Create( "HL2Button", self )
+    
+    local cancelText = language.GetPhrase( "#GameUI_Cancel" )
+    if cancelText == "#GameUI_Cancel" then
+        cancelText = "Cancel"
+    end
+    self.btnCancel:SetText( cancelText )
+    
+    self.btnCancel:SetPos( 320, 100 )
+    self.btnCancel:SetSize( 72, 24 )
+    self.btnCancel:SetContentAlignment( 4 )
+    self.btnCancel.DoClick = function() 
+        self:Close()
+    end
+end
+
+function QUIT_PANEL:OnQuit()
+    RunConsoleCommand( "gamemenucommand", "QuitNoConfirm" )
+    self:Close()
+end
+
+vgui.Register( "CQuitConfirmationDialog", QUIT_PANEL, "HL2Frame" )
+
+--------------------------------------------------------------------------------
+-- CSaveBeforeQuitDialog (Save & Quit, Quit, Cancel for in-game state)
+--------------------------------------------------------------------------------
+local SAVE_QUIT_PANEL = {}
+
+function SAVE_QUIT_PANEL:Init()
+    self.BaseClass.Init( self )
+    self:SetSize( 348, 124 )
+    self:Center()
+    self:MakePopup()
+    
+    local titleText = language.GetPhrase( "#GameUI_QuitConfirmationTitle" )
+    if titleText == "#GameUI_QuitConfirmationTitle" then
+        titleText = "Quit"
+    end
+    self:SetTitleText( titleText )
+    
+    self:SetDeleteOnClose( true )
+    self:SetMinimizeEnabled( false )
+    self:SetMaximizeEnabled( false )
+    
+    -- Message Label
+    self.lblMessage = vgui.Create( "DLabel", self )
+    self.lblMessage:SetPos( 17, 34 )
+    self.lblMessage:SetSize( 312, 42 )
+    self.lblMessage:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+    
+    local messageText = language.GetPhrase( "#GameUI_SaveAndQuitQuery_Info" )
+    if messageText == "#GameUI_SaveAndQuitQuery_Info" then
+        messageText = "Do you want to save your game before quitting?"
+    end
+    self.lblMessage:SetText( messageText )
+    
+    self.lblMessage:SetContentAlignment( 7 ) -- north-west
+    self.lblMessage:SetTextColor( HL2Scheme.GetColor( "NewGame.TextColor", Color( 255, 255, 255, 255 ), "SourceScheme" ) )
+    self.lblMessage:SetWrap( true )
+    
+    -- Save and Quit Button
+    self.btnSaveQuit = vgui.Create( "HL2Button", self )
+    
+    local saveQuitText = language.GetPhrase( "#GameUI_SaveAndQuit" )
+    if saveQuitText == "#GameUI_SaveAndQuit" then
+        saveQuitText = "Save and Quit"
+    end
+    self.btnSaveQuit:SetText( saveQuitText )
+    
+    self.btnSaveQuit:SetPos( 68, 80 )
+    self.btnSaveQuit:SetSize( 72, 24 )
+    self.btnSaveQuit:SetContentAlignment( 4 )
+    self.btnSaveQuit.DoClick = function() 
+        self:OnSaveAndQuit()
+    end
+    
+    -- Quit Button (without saving)
+    self.btnQuit = vgui.Create( "HL2Button", self )
+    
+    local quitText = language.GetPhrase( "#GameUI_DontSaveAndQuit" )
+    if quitText == "#GameUI_DontSaveAndQuit" then
+        quitText = "Don't Save"
+    end
+    self.btnQuit:SetText( quitText )
+    
+    self.btnQuit:SetPos( 150, 80 )
+    self.btnQuit:SetSize( 89, 24 )
+    self.btnQuit:SetContentAlignment( 4 )
+    self.btnQuit.DoClick = function() 
+        self:OnQuit()
+    end
+    
+    -- Cancel Button
+    self.btnCancel = vgui.Create( "HL2Button", self )
+    
+    local cancelText = language.GetPhrase( "#vgui_Cancel" )
+    if cancelText == "#vgui_Cancel" then
+        cancelText = "Cancel"
+    end
+    self.btnCancel:SetText( cancelText )
+    
+    self.btnCancel:SetPos( 249, 80 )
+    self.btnCancel:SetSize( 72, 24 )
+    self.btnCancel:SetContentAlignment( 4 )
+    self.btnCancel.DoClick = function() 
+        self:Close()
+    end
+end
+
+function SAVE_QUIT_PANEL:OnSaveAndQuit()
+    -- Auto-save using the same logic as Source engine
+    local saveName = "autosave_quit"
+    RunConsoleCommand( "save", saveName )
+    
+    -- Store reference for timer validation
+    local dialogRef = self
+    
+    -- Small delay to allow save to complete before quitting
+    -- Note: GMod's save command is fire-and-forget, so we can't check for success
+    -- The delay gives the save operation time to complete in most cases
+    timer.Simple( SAVE_COMPLETION_DELAY, function()
+        -- Only quit if the dialog is still valid (wasn't closed/removed)
+        if ( IsValid( dialogRef ) ) then
+            RunConsoleCommand( "gamemenucommand", "QuitNoConfirm" )
+        end
+    end )
+    
+    self:Close()
+end
+
+function SAVE_QUIT_PANEL:OnQuit()
+    RunConsoleCommand( "gamemenucommand", "QuitNoConfirm" )
+    self:Close()
+end
+
+vgui.Register( "CSaveBeforeQuitDialog", SAVE_QUIT_PANEL, "HL2Frame" )
 
 --------------------------------------------------------------------------------
 -- CGameMenu
@@ -182,15 +417,7 @@ function PANEL:ApplySchemeSettings()
 end
 
 function PANEL:UpdateMenuItemState()
-    local inGame = IsInGame()
-    
-    -- Hack: If we are on a background map, treat as not in game
-    if ( inGame and game.GetMap ) then
-        local map = game.GetMap()
-        if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
-            inGame = false
-        end
-    end
+    local inGame = IsInRealGame()
 
     local maxPlayers = 1
     if ( game.MaxPlayers ) then
@@ -426,10 +653,7 @@ function PANEL:Paint( w, h )
         -- Check if we are on a background map
         local isBackground = false
         if ( game.GetMap ) then
-            local map = game.GetMap()
-            if ( map == "background01" or map == "background02" or map == "background03" or map == "background04" or map == "background05" ) then
-                isBackground = true
-            end
+            isBackground = IsBackgroundMap( game.GetMap() )
         end
 
         -- If we are in game and not on a background map, we might want to draw blur or something
@@ -460,6 +684,20 @@ local function CreateMainMenu()
     end
     
     pnlMainMenu = vgui.Create( "CBasePanel" )
+end
+
+function OpenQuitConfirmationDialog()
+    if ( IsValid( g_QuitDialog ) ) then 
+        g_QuitDialog:Remove() 
+    end
+    
+    if ( IsSinglePlayerGame() ) then
+        -- Show save & quit dialog for single player games
+        g_QuitDialog = vgui.Create( "CSaveBeforeQuitDialog" )
+    else
+        -- Show simple confirmation for menu or multiplayer
+        g_QuitDialog = vgui.Create( "CQuitConfirmationDialog" )
+    end
 end
 
 hook.Add( "MenuStart", "CreateCustomMenu", CreateMainMenu )
