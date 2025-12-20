@@ -5,14 +5,6 @@ AddCSLuaFile("player_class.lua")
 
 include("shared.lua")
 
--- Helper function to check if we're on a background map
-local function IsBackgroundMap()
-	local map = game.GetMap()
-	return map == "background01" or map == "background02" or map == "background03" or 
-	       map == "background04" or map == "background05" or map == "background06" or 
-	       map == "background07"
-end
-
 -- ConVar for load last save on death (off by default)
 local cv_loadlastsave = CreateConVar( "campaign_load_last_save", "0", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Load last save on death instead of respawning" )
 
