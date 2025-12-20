@@ -242,13 +242,6 @@ function GM:PlayerSpawn(ply)
 		ply:DrawShadow( false )
 		ply:SetRenderMode( RENDERMODE_NONE )
 		ply:AddEffects( EF_NODRAW )
-	else
-		-- Ensure normal visibility on regular maps
-		ply:SetNoDraw( false )
-		ply:SetNotSolid( false )
-		ply:DrawShadow( true )
-		ply:SetRenderMode( RENDERMODE_NORMAL )
-		ply:RemoveEffects( EF_NODRAW )
 	end
 
 	if ply.RestoreVelocity then

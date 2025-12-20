@@ -115,7 +115,7 @@ function GM:CalcView( ply, origin, angles, fov )
 	return view
 end
 
--- Never draw local player (prevents death cam showing player model, and hides player on background maps)
+-- Never draw local player in first-person view (prevents death cam showing player model)
 function GM:ShouldDrawLocalPlayer( ply )
 	return false
 end
@@ -131,13 +131,6 @@ function GM:PreDrawViewModel( vm, ply, weapon )
 		return true -- Don't draw
 	end
 end
-
--- Hide player model completely on background maps
-hook.Add( "PrePlayerDraw", "HidePlayerOnBackgroundMaps", function( ply )
-	if ply == LocalPlayer() and IsBackgroundMap() then
-		return true -- Don't draw
-	end
-end )
 
 -- Black screen on fall death
 function GM:RenderScreenspaceEffects()
