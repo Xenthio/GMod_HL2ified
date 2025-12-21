@@ -6,7 +6,7 @@ AddCSLuaFile("player_class.lua")
 include("shared.lua")
 
 -- ConVar for load last save on death (off by default)
-local cv_loadlastsave = CreateConVar( "campaign_load_last_save", "0", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Load last save on death instead of respawning" )
+local cv_loadlastsave = CreateConVar( "campaign_load_last_save", "1", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Load last save on death instead of respawning" )
 
 function GM:Initialize()
 	print("[Campaign] Campaign Gamemode Initialized")
