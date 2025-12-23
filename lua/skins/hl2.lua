@@ -121,14 +121,16 @@ function SKIN:PaintButton(panel, w, h)
     local isDisabled = not panel:IsEnabled()
 
     -- Colors from scheme (matching Source SDK Button.cpp)
-    local defaultFgColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255), "SourceScheme")
+    local defaultFgColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255, 255), "SourceScheme")
     local armedFgColor = HL2Scheme.GetColor("Button.ArmedTextColor", defaultFgColor, "SourceScheme")
     local depressedFgColor = HL2Scheme.GetColor("Button.DepressedTextColor", defaultFgColor, "SourceScheme")
-    local disabledFgColor = HL2Scheme.GetColor("Button.DisabledTextColor", Color(100, 100, 100), "SourceScheme")
+    -- Disabled text uses Label.DisabledFgColor1 and DisabledFgColor2 for inset effect
+    local disabledFgColor1 = HL2Scheme.GetColor("Label.DisabledFgColor1", Color(117, 117, 117, 255), "SourceScheme")
+    local disabledFgColor2 = HL2Scheme.GetColor("Label.DisabledFgColor2", Color(30, 30, 30, 255), "SourceScheme")
 
     local defaultBgColor = HL2Scheme.GetColor("Button.BgColor", Color(0, 0, 0, 0), "SourceScheme")
     local armedBgColor = HL2Scheme.GetColor("Button.ArmedBgColor", defaultBgColor, "SourceScheme")
-    local depressedBgColor = HL2Scheme.GetColor("Button.DepressedBgColor", Color(0, 0, 0, 200), "SourceScheme")
+    local depressedBgColor = HL2Scheme.GetColor("Button.DepressedBgColor", Color(0, 0, 0, 0), "SourceScheme")
 
     -- Handle title buttons differently (no borders)
     if panel.IsTitleButton then
@@ -143,7 +145,8 @@ function SKIN:PaintButton(panel, w, h)
     -- Determine colors based on state
     local textColor, bgColor
     if isDisabled then
-        textColor = disabledFgColor
+        -- Disabled uses Label.DisabledFgColor1
+        textColor = disabledFgColor1
         bgColor = defaultBgColor
     elseif isDown then
         textColor = depressedFgColor
@@ -161,11 +164,11 @@ function SKIN:PaintButton(panel, w, h)
     surface.DrawRect(0, 0, w, h)
 
     -- Draw borders (ButtonBorder or ButtonDepressedBorder style)
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
 
-    if isDown then
-        -- Depressed border: dark on top/left, light on bottom/right
+    if isDown or isDisabled then
+        -- Depressed/disabled border: dark on top/left, light on bottom/right (inset look)
         surface.SetDrawColor(colDark)
         surface.DrawLine(0, 0, w - 1, 0) -- Top
         surface.DrawLine(0, 0, 0, h - 1) -- Left
@@ -248,13 +251,41 @@ end
 
 function SKIN:PaintButtonUp(panel, w, h)
     if not HL2Scheme then return end
-    -- Scroll bar up button uses Marlett 't' (up arrow)
+
+    local isDown = panel.Depressed or panel:IsDown()
+
+    -- ScrollBarButton uses transparent background with borders
+    local bgColor = HL2Scheme.GetColor("ScrollBarButton.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- Draw borders like regular buttons
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+
+    if isDown then
+        -- Depressed border
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    else
+        -- Raised border
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    end
+
+    -- Draw Marlett 't' (up arrow)
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
     surface.SetFont(marlettFont)
-
     local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
     surface.SetTextColor(fgColor)
-
     local tw, th = surface.GetTextSize("t")
     surface.SetTextPos((w - tw) / 2, (h - th) / 2)
     surface.DrawText("t")
@@ -262,13 +293,39 @@ end
 
 function SKIN:PaintButtonDown(panel, w, h)
     if not HL2Scheme then return end
-    -- Scroll bar down button uses Marlett 'u' (down arrow)
+
+    local isDown = panel.Depressed or panel:IsDown()
+
+    -- ScrollBarButton uses transparent background with borders
+    local bgColor = HL2Scheme.GetColor("ScrollBarButton.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- Draw borders
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+
+    if isDown then
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    else
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    end
+
+    -- Draw Marlett 'u' (down arrow)
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
     surface.SetFont(marlettFont)
-
     local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
     surface.SetTextColor(fgColor)
-
     local tw, th = surface.GetTextSize("u")
     surface.SetTextPos((w - tw) / 2, (h - th) / 2)
     surface.DrawText("u")
@@ -276,13 +333,36 @@ end
 
 function SKIN:PaintButtonLeft(panel, w, h)
     if not HL2Scheme then return end
-    -- Scroll bar left button uses Marlett '3' (left arrow)
+
+    local isDown = panel.Depressed or panel:IsDown()
+
+    local bgColor = HL2Scheme.GetColor("ScrollBarButton.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+
+    if isDown then
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    else
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    end
+
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
     surface.SetFont(marlettFont)
-
     local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
     surface.SetTextColor(fgColor)
-
     local tw, th = surface.GetTextSize("3")
     surface.SetTextPos((w - tw) / 2, (h - th) / 2)
     surface.DrawText("3")
@@ -290,13 +370,36 @@ end
 
 function SKIN:PaintButtonRight(panel, w, h)
     if not HL2Scheme then return end
-    -- Scroll bar right button uses Marlett '4' (right arrow)
+
+    local isDown = panel.Depressed or panel:IsDown()
+
+    local bgColor = HL2Scheme.GetColor("ScrollBarButton.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+
+    if isDown then
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    else
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(0, 0, w - 1, 0)
+        surface.DrawLine(0, 0, 0, h - 1)
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    end
+
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
     surface.SetFont(marlettFont)
-
     local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
     surface.SetTextColor(fgColor)
-
     local tw, th = surface.GetTextSize("4")
     surface.SetTextPos((w - tw) / 2, (h - th) / 2)
     surface.DrawText("4")
