@@ -334,7 +334,9 @@ end
 
 function SKIN:PaintScrollBarGrip(panel, w, h)
     if not HL2Scheme then return end
-    local isDown = panel:IsDown()
+
+    -- Check if the grip is being pressed (use Depressed property, not IsDown method)
+    local isDown = panel.Depressed
 
     -- Colors
     local bgColor = HL2Scheme.GetColor("ScrollBar.GripColor", Color(100, 100, 100, 255), "SourceScheme")
