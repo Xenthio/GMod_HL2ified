@@ -532,10 +532,6 @@ function SKIN:PaintComboBox(panel, w, h)
     surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-
-    -- Set text color for the selected item display
-    local textColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(221, 221, 221, 255), "SourceScheme")
-    panel:SetTextColor(textColor)
 end
 
 function SKIN:PaintComboDownArrow(panel, w, h)
@@ -635,8 +631,8 @@ function SKIN:PaintSliderKnob(panel, w, h)
 end
 
 function SKIN:PaintNumSlider(panel, w, h)
-    -- NumSlider is typically just a container, actual slider is inside
-    -- We can draw a simple background if needed
+    -- DNumSlider is a container - the slider track is painted by PaintSlider
+    -- which should be called for the DSlider child control
 end
 
 function SKIN:PaintScrollBarGrip(panel, w, h)

@@ -238,6 +238,8 @@ local COMBOBOX = {}
 function COMBOBOX:Init()
     self:SetSkin( "HL2" )
     self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+    self:SetTextColor( HL2Scheme.GetColor( "TextEntry.TextColor", Color( 221, 221, 221, 255 ), "SourceScheme" ) )
+    self:SetFGColor( HL2Scheme.GetColor( "TextEntry.TextColor", Color( 221, 221, 221, 255 ), "SourceScheme" ) )
 
     -- Override the menu to use HL2 skin
     local oldOpenMenu = self.OpenMenu
