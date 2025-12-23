@@ -633,10 +633,7 @@ end
 function SKIN:PaintScrollBarGrip(panel, w, h)
     if not HL2Scheme then return end
 
-    -- Check if the grip is being pressed (use Depressed property, not IsDown method)
-    local isDown = panel.Depressed
-
-    -- ScrollBarSlider.FgColor is the nob color
+    -- ScrollBarSlider.FgColor is the nob color (Blank = transparent)
     local nobColor = HL2Scheme.GetColor("ScrollBarSlider.FgColor", Color(0, 0, 0, 0), "SourceScheme")
     local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
     local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
@@ -645,22 +642,14 @@ function SKIN:PaintScrollBarGrip(panel, w, h)
     surface.SetDrawColor(nobColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw raised border
-    if isDown then
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(0, 0, w - 1, 0)
-        surface.DrawLine(0, 0, 0, h - 1)
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1)
-        surface.DrawLine(0, h - 1, w - 1, h - 1)
-    else
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(0, 0, w - 1, 0)
-        surface.DrawLine(0, 0, 0, h - 1)
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1)
-        surface.DrawLine(0, h - 1, w - 1, h - 1)
-    end
+    -- ScrollBar grip always has inset/depressed borders in HL2 (not changing based on state)
+    -- DepressedBorder: Dark on top/left, Bright on bottom/right
+    surface.SetDrawColor(colDark)
+    surface.DrawLine(0, 0, w - 1, 0) -- Top
+    surface.DrawLine(0, 0, 0, h - 1) -- Left
+    surface.SetDrawColor(colLight)
+    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
 
 function SKIN:PaintVScrollBar(panel, w, h)
