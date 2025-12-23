@@ -406,17 +406,58 @@ end
 function SKIN:PaintSlider(panel, w, h)
     if not HL2Scheme then return end
 
-    -- Track background
-    local trackColor = HL2Scheme.GetColor("Slider.TrackColor", Color(60, 60, 60, 255), "SourceScheme")
+    -- Track background (drawn in PaintBackground in Source SDK)
+    local trackColor = HL2Scheme.GetColor("Slider.TrackColor", Color(31, 31, 31, 255), "SourceScheme")
     -- Draw track
     local trackHeight = 4
     local trackY = (h - trackHeight) / 2
     surface.SetDrawColor(trackColor)
     surface.DrawRect(0, trackY, w, trackHeight)
-    -- Borders on track
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+    -- Draw inset border on track (DepressedBorder style)
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
     surface.SetDrawColor(colDark)
-    surface.DrawOutlinedRect(0, trackY, w, trackHeight)
+    surface.DrawLine(0, trackY, w - 1, trackY) -- Top
+    surface.DrawLine(0, trackY, 0, trackY + trackHeight - 1) -- Left
+    surface.SetDrawColor(colLight)
+    surface.DrawLine(w - 1, trackY, w - 1, trackY + trackHeight - 1) -- Right
+    surface.DrawLine(0, trackY + trackHeight - 1, w - 1, trackY + trackHeight - 1) -- Bottom
+end
+
+function SKIN:PaintSliderKnob(panel, w, h)
+    if not HL2Scheme then return end
+
+    local isDown = panel.Depressed
+    local isDisabled = panel:GetDisabled()
+
+    -- Slider nob color
+    local nobColor = HL2Scheme.GetColor("Slider.NobColor", Color(108, 108, 108, 255), "SourceScheme")
+
+    -- Draw knob background
+    surface.SetDrawColor(nobColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- Draw raised border on knob
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+
+    if isDown then
+        -- Depressed border
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(0, 0, w - 1, 0) -- Top
+        surface.DrawLine(0, 0, 0, h - 1) -- Left
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    else
+        -- Raised border
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(0, 0, w - 1, 0) -- Top
+        surface.DrawLine(0, 0, 0, h - 1) -- Left
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    end
 end
 
 function SKIN:PaintNumSlider(panel, w, h)
