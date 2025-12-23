@@ -17,12 +17,12 @@ function PANEL:Init()
     self:SetTitle( "" )
     self:ShowCloseButton( true )
     self:SetDraggable( true )
-    
+
     -- Hide DFrame's default title label (we draw it manually in the skin)
     if ( self.lblTitle ) then
         self.lblTitle:SetVisible( false )
     end
-    
+
     -- Setup Close Button (DFrame creates it)
     if ( self.btnClose ) then
         self.btnClose:SetText( "" )
@@ -39,7 +39,7 @@ function PANEL:Init()
     -- Ensure Min/Max exist
     if ( !self.btnMinim ) then self.btnMinim = vgui.Create( "DButton", self ) end
     if ( !self.btnMaxim ) then self.btnMaxim = vgui.Create( "DButton", self ) end
-    
+
     -- Setup Minimize Button
     self.btnMinim:SetText( "" )
     self.btnMinim:SetSkin( "HL2" )
@@ -70,27 +70,27 @@ function PANEL:Init()
     self.Closing = false
     self.LastVisible = false
     self:SetAlpha( 0 )
-    
+
     self:InvalidateLayout( true )
 end
 
 function PANEL:PerformLayout()
-    local w, h = self:GetSize()
+    local w = self:GetWide()
     local x = w - 25 -- Start position for Close button
     local y = 8
-    
+
     if ( self.btnClose and self.btnClose:IsVisible() ) then
         self.btnClose:SetPos( x, y )
         self.btnClose:SetSize( 18, 18 )
         x = x - 18 - 2
     end
-    
+
     if ( self.btnMaxim and self.btnMaxim:IsVisible() ) then
         self.btnMaxim:SetPos( x, y )
         self.btnMaxim:SetSize( 18, 18 )
         x = x - 18 - 2
     end
-    
+
     if ( self.btnMinim and self.btnMinim:IsVisible() ) then
         self.btnMinim:SetPos( x, y )
         self.btnMinim:SetSize( 18, 18 )
@@ -110,13 +110,13 @@ function PANEL:Think()
     if ( dframe and dframe.Think ) then
         dframe.Think( self )
     end
-    
+
     -- HL2 doesn't use the sizeall cursor for moving windows
     -- Override cursor after parent Think runs
     if ( !self.Sizing and !self.Dragging ) then
         self:SetCursor( "arrow" )
     end
-    
+
     -- Force layout if not done (fix for buttons at 0,0)
     if ( !self.LayoutDone ) then
         self:PerformLayout()
@@ -135,19 +135,19 @@ function PANEL:Think()
     -- Handle Focus Transition
     local focusTime = tonumber( HL2Scheme.GetResourceString( "Frame.FocusTransitionEffectTime", nil, "SourceScheme" ) ) or 0.3
     local targetWeight = self:IsActive() and 1 or 0
-    
+
     if ( self.FocusWeight != targetWeight ) then
         self.FocusWeight = math.Approach( self.FocusWeight, targetWeight, (1 / focusTime) * FrameTime() )
     end
-    
+
     -- Handle Visibility Fade
     local transitionTime = tonumber( HL2Scheme.GetResourceString( "Frame.TransitionEffectTime", nil, "SourceScheme" ) ) or 0.3
-    
+
     if ( self.Closing ) then
         local alpha = self:GetAlpha()
         alpha = math.Approach( alpha, 0, (255 / transitionTime) * FrameTime() )
         self:SetAlpha( alpha )
-        
+
         if ( alpha == 0 ) then
             self.Closing = false
             self:SetVisible( false )
@@ -202,7 +202,7 @@ function TEXTENTRY:Paint( w, h )
     if ( skin and skin.PaintTextEntry ) then
         skin:PaintTextEntry( self, w, h )
     end
-    
+
     -- Let base draw the text
     derma.SkinHook( "Paint", "TextEntry", self, w, h )
     return false
@@ -238,7 +238,7 @@ local COMBOBOX = {}
 function COMBOBOX:Init()
     self:SetSkin( "HL2" )
     self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
-    
+
     -- Override the menu to use HL2 skin
     local oldOpenMenu = self.OpenMenu
     self.OpenMenu = function( s, ... )
