@@ -64,8 +64,9 @@ SKIN.colButtonBorderShadow = Color(0, 0, 0, 100)
 function SKIN:PaintFrame(panel, w, h)
     if not HL2Scheme then return end
 
-    -- Background (square corners, not rounded)
-    local activeCol = HL2Scheme.GetColor("Frame.BgColor", Color(0, 0, 0, 196), "SourceScheme")
+    -- Background (FrameBorder uses backgroundtype "2" = rounded corners)
+    -- Colors from sourceschemebase.res
+    local activeCol = HL2Scheme.GetColor("Frame.BgColor", Color(160, 160, 160, 128), "SourceScheme")
     local inactiveCol = HL2Scheme.GetColor("Frame.OutOfFocusBgColor", Color(160, 160, 160, 32), "SourceScheme")
     local focusWeight = panel.FocusWeight or (panel:IsActive() and 1 or 0)
 
@@ -76,16 +77,17 @@ function SKIN:PaintFrame(panel, w, h)
     local a = Lerp(focusWeight, inactiveCol.a, activeCol.a)
     local bgColor = Color(r, g, b, a)
 
-    -- Draw square frame background (no rounded corners)
-    surface.SetDrawColor(bgColor)
-    surface.DrawRect(0, 0, w, h)
+    -- Draw rounded frame background (FrameBorder has backgroundtype "2")
+    draw.RoundedBox(8, 0, 0, w, h, bgColor)
 
     -- Title bar background (if drawing title bar)
     if panel.GetTitle and _drawTitleBar ~= false then
+        -- FrameTitleBar.BgColor defaults to "Blank" in sourceschemebase.res
         local titleBarBg = panel:IsActive() and
-            HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(76, 88, 68, 255), "SourceScheme") or
-            HL2Scheme.GetColor("FrameTitleBar.DisabledBgColor", Color(60, 60, 60, 255), "SourceScheme")
+            HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(0, 0, 0, 0), "SourceScheme") or
+            HL2Scheme.GetColor("FrameTitleBar.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
 
+        -- Frame.ClientInsetX/Y define the insets
         local inset = 5
         local captionHeight = 28
 
@@ -96,14 +98,16 @@ function SKIN:PaintFrame(panel, w, h)
         local title = panel:GetTitle()
         if title and title ~= "" then
             local font = HL2Scheme.GetFont("UiBold", "DefaultBold", "SourceScheme")
+            -- FrameTitleBar.TextColor defaults to "White" in sourceschemebase.res
             local titleColor = panel:IsActive() and
-                HL2Scheme.GetColor("FrameTitleBar.TextColor", Color(255, 255, 255), "SourceScheme") or
-                HL2Scheme.GetColor("FrameTitleBar.DisabledTextColor", Color(136, 136, 136, 255), "SourceScheme")
+                HL2Scheme.GetColor("FrameTitleBar.TextColor", Color(255, 255, 255, 255), "SourceScheme") or
+                HL2Scheme.GetColor("FrameTitleBar.DisabledTextColor", Color(255, 255, 255, 192), "SourceScheme")
 
             surface.SetFont(font)
             surface.SetTextColor(titleColor)
-            -- Source uses specific title inset (m_iTitleTextInsetX = 28 by default)
-            surface.SetTextPos(28, 9)
+            -- Frame.TitleTextInsetX is 16 in sourceschemebase.res
+            local titleInsetX = tonumber(HL2Scheme.GetResourceString("Frame.TitleTextInsetX", nil, "SourceScheme")) or 16
+            surface.SetTextPos(titleInsetX, 9)
             surface.DrawText(title)
         end
     end
