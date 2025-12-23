@@ -332,3 +332,28 @@ function LISTVIEW:Paint( w, h )
 end
 
 vgui.Register( "HL2ListView", LISTVIEW, "DListView" )
+
+-- ---------------------------------------------------------
+-- HL2NumSlider
+-- ---------------------------------------------------------
+local NUMSLIDER = {}
+
+function NUMSLIDER:Init()
+    self:SetSkin( "HL2" )
+end
+
+function NUMSLIDER:PerformLayout()
+    -- Make sure the internal slider uses HL2 skin and paints the track
+    if self.Slider and self.Slider:IsValid() then
+        self.Slider:SetSkin( "HL2" )
+        self.Slider.Paint = function(pnl, w, h)
+            local skin = pnl:GetSkin()
+            if skin and skin.PaintSlider then
+                skin:PaintSlider(pnl, w, h)
+            end
+            return false
+        end
+    end
+end
+
+vgui.Register( "HL2NumSlider", NUMSLIDER, "DNumSlider" )

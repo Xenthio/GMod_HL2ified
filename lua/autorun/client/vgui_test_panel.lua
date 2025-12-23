@@ -194,7 +194,7 @@ local function CreateVGUITestPanel()
     sectionLabel5:DockMargin( 5, 15, 5, 5 )
 
     -- Slider
-    local slider = vgui.Create( "DNumSlider", scroll )
+    local slider = vgui.Create( "HL2NumSlider", scroll )
     slider:SetText( "Volume" )
     slider:SetMin( 0 )
     slider:SetMax( 100 )
