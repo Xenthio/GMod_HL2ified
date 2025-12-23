@@ -238,4 +238,361 @@ function SKIN:PaintWindowMinimizeButton( panel, w, h )
     surface.DrawText( "0" )
 end
 
+function SKIN:PaintTextEntry( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local isEnabled = panel:IsEnabled()
+    local isFocused = panel:HasFocus()
+    
+    -- Background color
+    local bgColor = HL2Scheme.GetColor( "TextEntry.BgColor", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    local disabledBgColor = HL2Scheme.GetColor( "TextEntry.DisabledBgColor", Color( 50, 50, 50, 255 ), "SourceScheme" )
+    local selectedBgColor = HL2Scheme.GetColor( "TextEntry.SelectedBgColor", Color( 80, 80, 80, 255 ), "SourceScheme" )
+    
+    -- Border colors
+    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 136, 136, 136, 255 ), "SourceScheme" )
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    
+    -- Draw background
+    if ( !isEnabled ) then
+        surface.SetDrawColor( disabledBgColor )
+    elseif ( isFocused ) then
+        surface.SetDrawColor( selectedBgColor )
+    else
+        surface.SetDrawColor( bgColor )
+    end
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw inset border (dark on top/left, light on bottom/right)
+    surface.SetDrawColor( colDark )
+    surface.DrawLine( 0, 0, w-1, 0 ) -- Top
+    surface.DrawLine( 0, 0, 0, h-1 ) -- Left
+    
+    surface.SetDrawColor( colLight )
+    surface.DrawLine( w-1, 0, w-1, h-1 ) -- Right
+    surface.DrawLine( 0, h-1, w-1, h-1 ) -- Bottom
+    
+    -- Text color
+    local textColor = HL2Scheme.GetColor( "TextEntry.TextColor", Color( 200, 200, 200, 255 ), "SourceScheme" )
+    local disabledTextColor = HL2Scheme.GetColor( "TextEntry.DisabledTextColor", Color( 128, 128, 128, 255 ), "SourceScheme" )
+    
+    if ( !isEnabled ) then
+        panel:SetTextColor( disabledTextColor )
+    else
+        panel:SetTextColor( textColor )
+    end
+    
+    -- Cursor and highlight color
+    panel:SetCursorColor( HL2Scheme.GetColor( "TextEntry.CursorColor", Color( 255, 255, 255, 255 ), "SourceScheme" ) )
+    panel:SetHighlightColor( HL2Scheme.GetColor( "TextEntry.SelectedTextColor", Color( 255, 255, 0, 255 ), "SourceScheme" ) )
+end
+
+function SKIN:PaintCheckBox( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local isChecked = panel:GetChecked()
+    local isDown = panel:IsDown()
+    local isDisabled = !panel:IsEnabled()
+    
+    -- Colors
+    local bgColor = HL2Scheme.GetColor( "CheckButton.BgColor", Color( 45, 45, 48, 255 ), "SourceScheme" )
+    local checkColor = HL2Scheme.GetColor( "CheckButton.Check", Color( 255, 255, 255, 255 ), "SourceScheme" )
+    local borderColor1 = HL2Scheme.GetColor( "CheckButton.Border1", Color( 30, 30, 30, 255 ), "SourceScheme" )
+    local borderColor2 = HL2Scheme.GetColor( "CheckButton.Border2", Color( 120, 120, 120, 255 ), "SourceScheme" )
+    
+    -- Draw background
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw border (inset style)
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 136, 136, 136, 255 ), "SourceScheme" )
+    
+    surface.SetDrawColor( colDark )
+    surface.DrawLine( 0, 0, w-1, 0 ) -- Top
+    surface.DrawLine( 0, 0, 0, h-1 ) -- Left
+    
+    surface.SetDrawColor( colLight )
+    surface.DrawLine( w-1, 0, w-1, h-1 ) -- Right
+    surface.DrawLine( 0, h-1, w-1, h-1 ) -- Bottom
+    
+    -- Draw check mark
+    if ( isChecked ) then
+        -- Draw an X or checkmark
+        surface.SetDrawColor( checkColor )
+        -- Simple checkmark using lines
+        local mx, my = w/2, h/2
+        surface.DrawLine( mx-4, my-1, mx-1, my+2 )
+        surface.DrawLine( mx-1, my+2, mx+4, my-3 )
+        surface.DrawLine( mx-4, my, mx-1, my+3 )
+        surface.DrawLine( mx-1, my+3, mx+4, my-2 )
+    end
+end
+
+function SKIN:PaintComboBox( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local isOpen = panel:IsMenuOpen()
+    local isDown = panel:IsDown()
+    local isHovered = panel:IsHovered()
+    
+    -- Colors from scheme
+    local bgColor = HL2Scheme.GetColor( "ComboBoxButton.BgColor", Color( 81, 81, 81, 255 ), "SourceScheme" )
+    local arrowColor = HL2Scheme.GetColor( "ComboBoxButton.ArrowColor", Color( 200, 200, 200, 255 ), "SourceScheme" )
+    
+    -- Borders
+    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 136, 136, 136, 255 ), "SourceScheme" )
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    
+    -- Draw background
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw borders (raised style when not pressed)
+    if ( isDown or isOpen ) then
+        surface.SetDrawColor( colDark )
+        surface.DrawLine( 0, 0, w-1, 0 ) -- Top
+        surface.DrawLine( 0, 0, 0, h-1 ) -- Left
+        
+        surface.SetDrawColor( colLight )
+        surface.DrawLine( w-1, 0, w-1, h-1 ) -- Right
+        surface.DrawLine( 0, h-1, w-1, h-1 ) -- Bottom
+    else
+        surface.SetDrawColor( colLight )
+        surface.DrawLine( 0, 0, w-1, 0 ) -- Top
+        surface.DrawLine( 0, 0, 0, h-1 ) -- Left
+        
+        surface.SetDrawColor( colDark )
+        surface.DrawLine( w-1, 0, w-1, h-1 ) -- Right
+        surface.DrawLine( 0, h-1, w-1, h-1 ) -- Bottom
+    end
+    
+    -- Draw dropdown arrow on the right
+    local arrowSize = 4
+    local arrowX = w - 12
+    local arrowY = h / 2
+    
+    surface.SetDrawColor( arrowColor )
+    -- Draw downward pointing triangle
+    for i = 0, arrowSize do
+        surface.DrawLine( arrowX - i, arrowY - arrowSize + i, arrowX + i, arrowY - arrowSize + i )
+    end
+end
+
+function SKIN:PaintSlider( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    -- Track background
+    local bgColor = HL2Scheme.GetColor( "Slider.NobColor", Color( 81, 81, 81, 255 ), "SourceScheme" )
+    local trackColor = HL2Scheme.GetColor( "Slider.TrackColor", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    
+    -- Draw track
+    local trackHeight = 4
+    local trackY = (h - trackHeight) / 2
+    
+    surface.SetDrawColor( trackColor )
+    surface.DrawRect( 0, trackY, w, trackHeight )
+    
+    -- Borders on track
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    surface.SetDrawColor( colDark )
+    surface.DrawOutlinedRect( 0, trackY, w, trackHeight )
+end
+
+function SKIN:PaintNumSlider( panel, w, h )
+    -- NumSlider is typically just a container, actual slider is inside
+    -- We can draw a simple background if needed
+end
+
+function SKIN:PaintScrollBarGrip( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local isDown = panel:IsDown()
+    local isHovered = panel:IsHovered()
+    
+    -- Colors
+    local bgColor = HL2Scheme.GetColor( "ScrollBar.GripColor", Color( 100, 100, 100, 255 ), "SourceScheme" )
+    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 136, 136, 136, 255 ), "SourceScheme" )
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    
+    -- Draw background
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw raised border
+    if ( isDown ) then
+        surface.SetDrawColor( colDark )
+        surface.DrawLine( 0, 0, w-1, 0 )
+        surface.DrawLine( 0, 0, 0, h-1 )
+        
+        surface.SetDrawColor( colLight )
+        surface.DrawLine( w-1, 0, w-1, h-1 )
+        surface.DrawLine( 0, h-1, w-1, h-1 )
+    else
+        surface.SetDrawColor( colLight )
+        surface.DrawLine( 0, 0, w-1, 0 )
+        surface.DrawLine( 0, 0, 0, h-1 )
+        
+        surface.SetDrawColor( colDark )
+        surface.DrawLine( w-1, 0, w-1, h-1 )
+        surface.DrawLine( 0, h-1, w-1, h-1 )
+    end
+end
+
+function SKIN:PaintVScrollBar( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local bgColor = HL2Scheme.GetColor( "ScrollBar.BgColor", Color( 45, 45, 48, 255 ), "SourceScheme" )
+    
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+end
+
+function SKIN:PaintListView( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local bgColor = HL2Scheme.GetColor( "ListPanel.BgColor", Color( 45, 45, 48, 255 ), "SourceScheme" )
+    
+    -- Draw background
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw border
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    local colLight = HL2Scheme.GetColor( "Border.Bright", Color( 136, 136, 136, 255 ), "SourceScheme" )
+    
+    surface.SetDrawColor( colDark )
+    surface.DrawLine( 0, 0, w-1, 0 )
+    surface.DrawLine( 0, 0, 0, h-1 )
+    
+    surface.SetDrawColor( colLight )
+    surface.DrawLine( w-1, 0, w-1, h-1 )
+    surface.DrawLine( 0, h-1, w-1, h-1 )
+end
+
+function SKIN:PaintListViewLine( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    if ( panel:IsSelected() ) then
+        local selectedColor = HL2Scheme.GetColor( "ListPanel.SelectedBgColor", Color( 255, 155, 0, 255 ), "SourceScheme" )
+        surface.SetDrawColor( selectedColor )
+        surface.DrawRect( 0, 0, w, h )
+    elseif ( panel:IsHovered() ) then
+        local hoverColor = HL2Scheme.GetColor( "ListPanel.HoverBgColor", Color( 70, 70, 70, 255 ), "SourceScheme" )
+        surface.SetDrawColor( hoverColor )
+        surface.DrawRect( 0, 0, w, h )
+    elseif ( panel.m_bAlt ) then
+        local altColor = HL2Scheme.GetColor( "ListPanel.AltBgColor", Color( 40, 40, 40, 255 ), "SourceScheme" )
+        surface.SetDrawColor( altColor )
+        surface.DrawRect( 0, 0, w, h )
+    end
+end
+
+function SKIN:PaintMenuOption( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    if ( panel.m_bBackground ) then
+        local bgColor = HL2Scheme.GetColor( "Menu.BgColor", Color( 62, 62, 62, 255 ), "SourceScheme" )
+        surface.SetDrawColor( bgColor )
+        surface.DrawRect( 0, 0, w, h )
+    end
+    
+    if ( panel:GetHovered() ) then
+        local hoverColor = HL2Scheme.GetColor( "Menu.HoverBgColor", Color( 255, 155, 0, 255 ), "SourceScheme" )
+        surface.SetDrawColor( hoverColor )
+        surface.DrawRect( 0, 0, w, h )
+    end
+end
+
+function SKIN:PaintMenu( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local bgColor = HL2Scheme.GetColor( "Menu.BgColor", Color( 62, 62, 62, 255 ), "SourceScheme" )
+    
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw border
+    local borderColor = HL2Scheme.GetColor( "Menu.BorderColor", Color( 120, 120, 120, 255 ), "SourceScheme" )
+    surface.SetDrawColor( borderColor )
+    surface.DrawOutlinedRect( 0, 0, w, h )
+end
+
+function SKIN:PaintPropertySheet( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local bgColor = HL2Scheme.GetColor( "PropertySheet.BgColor", Color( 45, 45, 48, 255 ), "SourceScheme" )
+    
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+end
+
+function SKIN:PaintTab( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    local isActive = panel:IsActive()
+    
+    local bgColor = HL2Scheme.GetColor( "PropertySheet.TabBgColor", Color( 81, 81, 81, 255 ), "SourceScheme" )
+    local activeBgColor = HL2Scheme.GetColor( "PropertySheet.ActiveTabBgColor", Color( 62, 62, 62, 255 ), "SourceScheme" )
+    
+    if ( isActive ) then
+        surface.SetDrawColor( activeBgColor )
+    else
+        surface.SetDrawColor( bgColor )
+    end
+    
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Draw top and side borders
+    local borderColor = HL2Scheme.GetColor( "Border.Bright", Color( 120, 120, 120, 255 ), "SourceScheme" )
+    surface.SetDrawColor( borderColor )
+    surface.DrawLine( 0, 0, w-1, 0 ) -- Top
+    surface.DrawLine( 0, 0, 0, h-1 ) -- Left
+    surface.DrawLine( w-1, 0, w-1, h-1 ) -- Right
+end
+
+function SKIN:PaintLabel( panel, w, h )
+    -- Labels typically don't need special painting, text is rendered by the panel itself
+    -- But we can ensure proper text color
+    if ( !HL2Scheme ) then return end
+    
+    if ( !panel.m_bCustomTextColor ) then
+        local textColor = HL2Scheme.GetColor( "Label.TextColor", Color( 200, 200, 200, 255 ), "SourceScheme" )
+        panel:SetTextColor( textColor )
+    end
+end
+
+function SKIN:PaintPanel( panel, w, h )
+    -- Generic panel, can have a background
+    if ( panel.m_bPaintBackground ) then
+        if ( !HL2Scheme ) then return end
+        
+        local bgColor = HL2Scheme.GetColor( "Panel.BgColor", Color( 62, 62, 62, 255 ), "SourceScheme" )
+        surface.SetDrawColor( bgColor )
+        surface.DrawRect( 0, 0, w, h )
+    end
+end
+
+function SKIN:PaintProgress( panel, w, h )
+    if ( !HL2Scheme ) then return end
+    
+    -- Background
+    local bgColor = HL2Scheme.GetColor( "ProgressBar.BgColor", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    surface.SetDrawColor( bgColor )
+    surface.DrawRect( 0, 0, w, h )
+    
+    -- Progress bar
+    local barColor = HL2Scheme.GetColor( "ProgressBar.FgColor", Color( 255, 155, 0, 255 ), "SourceScheme" )
+    local fraction = panel:GetFraction() or 0
+    local barWidth = w * fraction
+    
+    surface.SetDrawColor( barColor )
+    surface.DrawRect( 0, 0, barWidth, h )
+    
+    -- Border
+    local colDark = HL2Scheme.GetColor( "Border.Dark", Color( 60, 60, 60, 255 ), "SourceScheme" )
+    surface.SetDrawColor( colDark )
+    surface.DrawOutlinedRect( 0, 0, w, h )
+end
+
 derma.DefineSkin( "HL2", "Half-Life 2 VGUI Skin", SKIN )

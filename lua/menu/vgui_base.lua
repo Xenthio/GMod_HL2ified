@@ -184,3 +184,149 @@ function BUTTON:Init()
 end
 
 vgui.Register( "HL2Button", BUTTON, "DButton" )
+
+-- ---------------------------------------------------------
+-- HL2TextEntry
+-- ---------------------------------------------------------
+local TEXTENTRY = {}
+
+function TEXTENTRY:Init()
+    self:SetSkin( "HL2" )
+    self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+    self:SetCursor( "beam" )
+    self:SetTextInset( 4, 0 )
+end
+
+function TEXTENTRY:Paint( w, h )
+    local skin = self:GetSkin()
+    if ( skin and skin.PaintTextEntry ) then
+        skin:PaintTextEntry( self, w, h )
+    end
+    
+    -- Let base draw the text
+    derma.SkinHook( "Paint", "TextEntry", self, w, h )
+    return false
+end
+
+vgui.Register( "HL2TextEntry", TEXTENTRY, "DTextEntry" )
+
+-- ---------------------------------------------------------
+-- HL2CheckBox
+-- ---------------------------------------------------------
+local CHECKBOX = {}
+
+function CHECKBOX:Init()
+    self:SetSkin( "HL2" )
+    self:SetSize( 16, 16 )
+end
+
+function CHECKBOX:Paint( w, h )
+    local skin = self:GetSkin()
+    if ( skin and skin.PaintCheckBox ) then
+        skin:PaintCheckBox( self, w, h )
+    end
+    return true
+end
+
+vgui.Register( "HL2CheckBox", CHECKBOX, "DCheckBox" )
+
+-- ---------------------------------------------------------
+-- HL2ComboBox
+-- ---------------------------------------------------------
+local COMBOBOX = {}
+
+function COMBOBOX:Init()
+    self:SetSkin( "HL2" )
+    self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+    
+    -- Override the menu to use HL2 skin
+    local oldOpenMenu = self.OpenMenu
+    self.OpenMenu = function( s, ... )
+        local ret = oldOpenMenu( s, ... )
+        if ( IsValid( s.Menu ) ) then
+            s.Menu:SetSkin( "HL2" )
+        end
+        return ret
+    end
+end
+
+function COMBOBOX:Paint( w, h )
+    local skin = self:GetSkin()
+    if ( skin and skin.PaintComboBox ) then
+        skin:PaintComboBox( self, w, h )
+    end
+    return true
+end
+
+vgui.Register( "HL2ComboBox", COMBOBOX, "DComboBox" )
+
+-- ---------------------------------------------------------
+-- HL2Slider
+-- ---------------------------------------------------------
+local SLIDER = {}
+
+function SLIDER:Init()
+    self:SetSkin( "HL2" )
+end
+
+function SLIDER:Paint( w, h )
+    local skin = self:GetSkin()
+    if ( skin and skin.PaintSlider ) then
+        skin:PaintSlider( self, w, h )
+    end
+    return false
+end
+
+vgui.Register( "HL2Slider", SLIDER, "DSlider" )
+
+-- ---------------------------------------------------------
+-- HL2Label
+-- ---------------------------------------------------------
+local LABEL = {}
+
+function LABEL:Init()
+    self:SetSkin( "HL2" )
+    self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+    self:SetTextColor( HL2Scheme.GetColor( "Label.TextColor", Color( 200, 200, 200, 255 ), "SourceScheme" ) )
+end
+
+vgui.Register( "HL2Label", LABEL, "DLabel" )
+
+-- ---------------------------------------------------------
+-- HL2Panel
+-- ---------------------------------------------------------
+local PANELBASE = {}
+
+function PANELBASE:Init()
+    self:SetSkin( "HL2" )
+end
+
+function PANELBASE:Paint( w, h )
+    if ( self.m_bPaintBackground ) then
+        local skin = self:GetSkin()
+        if ( skin and skin.PaintPanel ) then
+            skin:PaintPanel( self, w, h )
+        end
+    end
+end
+
+vgui.Register( "HL2Panel", PANELBASE, "DPanel" )
+
+-- ---------------------------------------------------------
+-- HL2ListView
+-- ---------------------------------------------------------
+local LISTVIEW = {}
+
+function LISTVIEW:Init()
+    self:SetSkin( "HL2" )
+end
+
+function LISTVIEW:Paint( w, h )
+    local skin = self:GetSkin()
+    if ( skin and skin.PaintListView ) then
+        skin:PaintListView( self, w, h )
+    end
+    return false
+end
+
+vgui.Register( "HL2ListView", LISTVIEW, "DListView" )
