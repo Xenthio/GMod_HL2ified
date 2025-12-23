@@ -246,7 +246,6 @@ function SKIN:PaintTextEntry(panel, w, h)
     if not HL2Scheme then return end
 
     local isEnabled = panel:IsEnabled()
-    local isFocused = panel:HasFocus()
 
     -- Colors from scheme (matching Source SDK TextEntry.cpp)
     local fgColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(200, 200, 200, 255), "SourceScheme")
@@ -342,7 +341,7 @@ function SKIN:PaintComboBox(panel, w, h)
     -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
     -- The main box should just have the depressed border style
     local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
-    
+
     -- Draw background
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
@@ -355,36 +354,10 @@ function SKIN:PaintComboBox(panel, w, h)
     surface.SetDrawColor(colDark)
     surface.DrawLine(0, 0, w - 1, 0) -- Top
     surface.DrawLine(0, 0, 0, h - 1) -- Left
-    
+
     surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-end
-    if isDown or isOpen then
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-    else
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-    end
-
-    -- Draw dropdown arrow on the right
-    local arrowSize = 4
-    local arrowX = w - 12
-    local arrowY = h / 2
-    surface.SetDrawColor(arrowColor)
-    -- Draw downward pointing triangle
-    for i = 0, arrowSize do
-        surface.DrawLine(arrowX - i, arrowY - arrowSize + i, arrowX + i, arrowY - arrowSize + i)
-    end
 end
 
 function SKIN:PaintComboDownArrow(panel, w, h)
@@ -441,7 +414,7 @@ function SKIN:PaintComboDownArrow(panel, w, h)
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
     surface.SetFont(marlettFont)
     surface.SetTextColor(arrowColor)
-    
+
     local tw, th = surface.GetTextSize("u")
     surface.SetTextPos((w - tw) / 2, (h - th) / 2)
     surface.DrawText("u")
