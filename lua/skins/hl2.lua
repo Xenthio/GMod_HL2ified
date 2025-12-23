@@ -338,20 +338,28 @@ end
 
 function SKIN:PaintComboBox(panel, w, h)
     if not HL2Scheme then return end
-    local isOpen = panel:IsMenuOpen()
-    local isDown = panel:IsDown()
 
-    -- Colors from scheme
-    local bgColor = HL2Scheme.GetColor("ComboBoxButton.BgColor", Color(81, 81, 81, 255), "SourceScheme")
-    local arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(200, 200, 200, 255), "SourceScheme")
-
-    -- Borders
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+    -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
+    -- The main box should just have the depressed border style
+    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
+    
     -- Draw background
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
-    -- Draw borders (raised style when not pressed)
+
+    -- Draw DepressedBorder (ComboBoxBorder = DepressedBorder)
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+
+    -- DepressedBorder: Dark on top/left, Bright on bottom/right
+    surface.SetDrawColor(colDark)
+    surface.DrawLine(0, 0, w - 1, 0) -- Top
+    surface.DrawLine(0, 0, 0, h - 1) -- Left
+    
+    surface.SetDrawColor(colLight)
+    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+end
     if isDown or isOpen then
         surface.SetDrawColor(colDark)
         surface.DrawLine(0, 0, w - 1, 0) -- Top
@@ -377,6 +385,66 @@ function SKIN:PaintComboBox(panel, w, h)
     for i = 0, arrowSize do
         surface.DrawLine(arrowX - i, arrowY - arrowSize + i, arrowX + i, arrowY - arrowSize + i)
     end
+end
+
+function SKIN:PaintComboDownArrow(panel, w, h)
+    if not HL2Scheme then return end
+
+    -- The ComboBox button uses Marlett font with 'u' character (down arrow)
+    -- and ScrollBarButtonBorder
+    local comboBox = panel.ComboBox
+    if not comboBox then return end
+
+    local isDisabled = not comboBox:IsEnabled()
+    local isPressed = comboBox.Depressed or comboBox:IsMenuOpen()
+    local isHovered = comboBox.Hovered
+
+    -- Colors from scheme
+    local bgColor = HL2Scheme.GetColor("ComboBoxButton.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    local arrowColor
+    if isDisabled then
+        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(127, 127, 127, 255), "SourceScheme")
+        bgColor = HL2Scheme.GetColor("ComboBoxButton.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
+    elseif isPressed or isHovered then
+        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArmedArrowColor", Color(255, 255, 255, 255), "SourceScheme")
+    else
+        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(221, 221, 221, 255), "SourceScheme")
+    end
+
+    -- Draw background
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- Draw ScrollBarButtonBorder (RaisedBorder when not pressed, DepressedBorder when pressed)
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+
+    if isPressed then
+        -- DepressedBorder
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(0, 0, w - 1, 0) -- Top
+        surface.DrawLine(0, 0, 0, h - 1) -- Left
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    else
+        -- RaisedBorder (ScrollBarButtonBorder)
+        surface.SetDrawColor(colLight)
+        surface.DrawLine(0, 0, w - 1, 0) -- Top
+        surface.DrawLine(0, 0, 0, h - 1) -- Left
+        surface.SetDrawColor(colDark)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    end
+
+    -- Draw Marlett 'u' character (down arrow)
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+    surface.SetTextColor(arrowColor)
+    
+    local tw, th = surface.GetTextSize("u")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("u")
 end
 
 function SKIN:PaintSlider(panel, w, h)
