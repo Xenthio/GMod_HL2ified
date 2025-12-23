@@ -92,7 +92,7 @@ function SKIN:PaintFrame(panel, w, h)
         local captionHeight = 28
 
         surface.SetDrawColor(titleBarBg)
-        surface.DrawFilledRect(inset, inset, w - inset, captionHeight)
+        surface.DrawRect(inset, inset, w - inset, captionHeight)
 
         -- Title text
         local title = panel:GetTitle()
@@ -183,6 +183,10 @@ function SKIN:PaintButton(panel, w, h)
     end
 
     panel:SetTextColor(textColor)
+    -- Buttons should be left-aligned by default (a_west)
+    if not panel.m_bAlignmentSet then
+        panel:SetContentAlignment(4) -- 4 = west/left alignment
+    end
 end
 
 function SKIN:PaintWindowCloseButton(panel, w, h)
@@ -364,7 +368,7 @@ function SKIN:PaintComboDownArrow(panel, w, h)
     if not HL2Scheme then return end
 
     -- The ComboBox button uses Marlett font with 'u' character (down arrow)
-    -- and ScrollBarButtonBorder
+    -- ComboBoxButton has SetTextInset(3, 0) in Source SDK
     local comboBox = panel.ComboBox
     if not comboBox then return end
 
@@ -388,35 +392,14 @@ function SKIN:PaintComboDownArrow(panel, w, h)
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw ScrollBarButtonBorder (RaisedBorder when not pressed, DepressedBorder when pressed)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-
-    if isPressed then
-        -- DepressedBorder
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-    else
-        -- RaisedBorder (ScrollBarButtonBorder)
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-    end
-
-    -- Draw Marlett 'u' character (down arrow)
+    -- Draw Marlett 'u' character (down arrow) with inset of 3 pixels from left
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
     surface.SetFont(marlettFont)
     surface.SetTextColor(arrowColor)
 
     local tw, th = surface.GetTextSize("u")
-    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    -- SetTextInset(3, 0) means 3 pixels from left, vertically centered
+    surface.SetTextPos(3, (h - th) / 2)
     surface.DrawText("u")
 end
 
