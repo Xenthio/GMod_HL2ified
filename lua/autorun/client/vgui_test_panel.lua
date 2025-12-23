@@ -8,6 +8,52 @@ include( "menu/vgui_scheme.lua" )
 include( "skins/hl2.lua" )
 include( "menu/vgui_base.lua" )
 
+-- ConVar to enable HL2 skin as default
+CreateClientConVar( "hl2_derma_skin", "0", true, false, "Use HL2 VGUI skin as default for all derma controls (0 = off, 1 = on)" )
+
+-- Apply HL2 skin as default if enabled
+local function ApplyDefaultSkin()
+    if ( GetConVar( "hl2_derma_skin" ):GetBool() ) then
+        -- Set HL2 as the default skin
+        local oldRegister = vgui.Register
+        vgui.Register = function( name, tbl, base )
+            oldRegister( name, tbl, base )
+            
+            -- Hook into panel creation to set HL2 skin
+            if ( tbl and !tbl.HL2SkinApplied ) then
+                local oldInit = tbl.Init
+                tbl.Init = function( self )
+                    if ( oldInit ) then oldInit( self ) end
+                    
+                    -- Apply HL2 skin to standard derma controls
+                    if ( self:GetSkin() and self:GetSkin().Name == "Default" ) then
+                        self:SetSkin( "HL2" )
+                    end
+                end
+                tbl.HL2SkinApplied = true
+            end
+        end
+        
+        print( "[HL2ified] HL2 Derma skin is now the default skin!" )
+    end
+end
+
+-- Apply on load
+ApplyDefaultSkin()
+
+-- Console command to toggle default skin
+concommand.Add( "hl2_toggle_derma_skin", function()
+    local cvar = GetConVar( "hl2_derma_skin" )
+    local newValue = cvar:GetBool() and 0 or 1
+    RunConsoleCommand( "hl2_derma_skin", tostring( newValue ) )
+    
+    if ( newValue == 1 ) then
+        print( "[HL2ified] HL2 Derma skin enabled as default. Restart the game or reload Lua for full effect." )
+    else
+        print( "[HL2ified] HL2 Derma skin disabled. Using standard Derma skin. Restart the game or reload Lua for full effect." )
+    end
+end )
+
 -- Global reference to the test panel
 local g_VGUITestPanel = nil
 
