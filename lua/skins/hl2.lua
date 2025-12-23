@@ -471,13 +471,15 @@ function SKIN:PaintScrollBarGrip(panel, w, h)
     -- Check if the grip is being pressed (use Depressed property, not IsDown method)
     local isDown = panel.Depressed
 
-    -- Colors
-    local bgColor = HL2Scheme.GetColor("ScrollBar.GripColor", Color(100, 100, 100, 255), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+    -- ScrollBarSlider.FgColor is the nob color
+    local nobColor = HL2Scheme.GetColor("ScrollBarSlider.FgColor", Color(0, 0, 0, 0), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+
     -- Draw background
-    surface.SetDrawColor(bgColor)
+    surface.SetDrawColor(nobColor)
     surface.DrawRect(0, 0, w, h)
+
     -- Draw raised border
     if isDown then
         surface.SetDrawColor(colDark)
@@ -498,10 +500,18 @@ end
 
 function SKIN:PaintVScrollBar(panel, w, h)
     if not HL2Scheme then return end
-    local bgColor = HL2Scheme.GetColor("ScrollBar.BgColor", Color(45, 45, 48, 255), "SourceScheme")
+    local bgColor = HL2Scheme.GetColor("ScrollBarSlider.BgColor", Color(255, 255, 255, 64), "SourceScheme")
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 end
+
+function SKIN:PaintHScrollBar(panel, w, h)
+    if not HL2Scheme then return end
+    local bgColor = HL2Scheme.GetColor("ScrollBarSlider.BgColor", Color(255, 255, 255, 64), "SourceScheme")
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+end
+
 
 function SKIN:PaintListView(panel, w, h)
     if not HL2Scheme then return end
