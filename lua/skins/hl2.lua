@@ -413,8 +413,9 @@ function SKIN:PaintTextEntry(panel, w, h)
     -- Colors from scheme (matching Source SDK TextEntry.cpp)
     -- TextEntry.TextColor is OffWhite (221 221 221 255)
     local fgColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(221, 221, 221, 255), "SourceScheme")
-    -- TextEntry.BgColor is TransparentBlack (0 0 0 128)
-    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
+    -- TextEntry.BgColor is TransparentBlack, but we'll use a slightly more visible dark gray
+    -- to ensure text is visible against various backgrounds
+    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(45, 45, 48, 255), "SourceScheme")
     -- TextEntry.DisabledTextColor is DullWhite (190 190 190 255)
     local disabledFgColor = HL2Scheme.GetColor("TextEntry.DisabledTextColor", Color(190, 190, 190, 255), "SourceScheme")
     -- TextEntry.DisabledBgColor is Blank (0 0 0 0)
@@ -463,12 +464,16 @@ function SKIN:PaintCheckBox(panel, w, h)
     local isEnabled = panel:IsEnabled()
 
     -- Colors from scheme (matching Source SDK CheckButton.cpp)
-    local bgColor = HL2Scheme.GetColor("CheckButton.BgColor", Color(62, 70, 55, 255), "SourceScheme")
-    local disabledBgColor = HL2Scheme.GetColor("CheckButton.DisabledBgColor", Color(62, 70, 55, 255), "SourceScheme")
-    local borderColor1 = HL2Scheme.GetColor("CheckButton.Border1", Color(20, 20, 20, 255), "SourceScheme")
-    local borderColor2 = HL2Scheme.GetColor("CheckButton.Border2", Color(90, 90, 90, 255), "SourceScheme")
-    local checkColor = HL2Scheme.GetColor("CheckButton.Check", Color(20, 20, 20, 255), "SourceScheme")
-    local disabledFgColor = HL2Scheme.GetColor("CheckButton.DisabledFgColor", Color(130, 130, 130, 255), "SourceScheme")
+    -- CheckButton.BgColor is TransparentBlack
+    local bgColor = HL2Scheme.GetColor("CheckButton.BgColor", Color(0, 0, 0, 128), "SourceScheme")
+    local disabledBgColor = HL2Scheme.GetColor("CheckButton.DisabledBgColor", Color(0, 0, 0, 128), "SourceScheme")
+    -- CheckButton.Border1 references Border.Dark (40 40 40 196)
+    local borderColor1 = HL2Scheme.GetColor("CheckButton.Border1", Color(40, 40, 40, 196), "SourceScheme")
+    -- CheckButton.Border2 references Border.Bright (200 200 200 196)
+    local borderColor2 = HL2Scheme.GetColor("CheckButton.Border2", Color(200, 200, 200, 196), "SourceScheme")
+    -- CheckButton.Check is White (255 255 255 255)
+    local checkColor = HL2Scheme.GetColor("CheckButton.Check", Color(255, 255, 255, 255), "SourceScheme")
+    local disabledFgColor = HL2Scheme.GetColor("Label.DisabledFgColor1", Color(117, 117, 117, 255), "SourceScheme")
 
     -- Use Marlett font for checkbox rendering (like Source SDK)
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
@@ -508,8 +513,8 @@ function SKIN:PaintComboBox(panel, w, h)
     if not HL2Scheme then return end
 
     -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
-    -- The main box should just have the depressed border style
-    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
+    -- Use same background as TextEntry for consistency
+    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(45, 45, 48, 255), "SourceScheme")
 
     -- Draw background
     surface.SetDrawColor(bgColor)
@@ -527,6 +532,10 @@ function SKIN:PaintComboBox(panel, w, h)
     surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+
+    -- Set text color for the selected item display
+    local textColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(221, 221, 221, 255), "SourceScheme")
+    panel:SetTextColor(textColor)
 end
 
 function SKIN:PaintComboDownArrow(panel, w, h)
