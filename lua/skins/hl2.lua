@@ -515,62 +515,65 @@ end
 
 function SKIN:PaintListView(panel, w, h)
     if not HL2Scheme then return end
-    local bgColor = HL2Scheme.GetColor("ListPanel.BgColor", Color(45, 45, 48, 255), "SourceScheme")
+    -- ListPanel.BgColor is TransparentBlack in scheme
+    local bgColor = HL2Scheme.GetColor("ListPanel.BgColor", Color(0, 0, 0, 128), "SourceScheme")
     -- Draw background
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
-    -- Draw border
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
+
+    -- Draw depressed border (inset border for list panels)
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+
+    -- DepressedBorder: Dark on top/left, Bright on bottom/right
     surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0)
-    surface.DrawLine(0, 0, 0, h - 1)
+    surface.DrawLine(0, 0, w - 1, 0) -- Top
+    surface.DrawLine(0, 0, 0, h - 1) -- Left
     surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1)
-    surface.DrawLine(0, h - 1, w - 1, h - 1)
+    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
 
 function SKIN:PaintListViewLine(panel, w, h)
     if not HL2Scheme then return end
     if panel:IsSelected() then
+        -- Use ListPanel.SelectedBgColor which is Orange
         local selectedColor = HL2Scheme.GetColor("ListPanel.SelectedBgColor", Color(255, 155, 0, 255), "SourceScheme")
         surface.SetDrawColor(selectedColor)
         surface.DrawRect(0, 0, w, h)
-    elseif panel:IsHovered() then
-        local hoverColor = HL2Scheme.GetColor("ListPanel.HoverBgColor", Color(70, 70, 70, 255), "SourceScheme")
-        surface.SetDrawColor(hoverColor)
-        surface.DrawRect(0, 0, w, h)
-    elseif panel.m_bAlt then
-        local altColor = HL2Scheme.GetColor("ListPanel.AltBgColor", Color(40, 40, 40, 255), "SourceScheme")
-        surface.SetDrawColor(altColor)
-        surface.DrawRect(0, 0, w, h)
     end
+    -- Note: ListPanel doesn't have hover states in Source SDK, only selected
 end
 
 function SKIN:PaintMenuOption(panel, w, h)
     if not HL2Scheme then return end
-    if panel.m_bBackground then
-        local bgColor = HL2Scheme.GetColor("Menu.BgColor", Color(62, 62, 62, 255), "SourceScheme")
-        surface.SetDrawColor(bgColor)
-        surface.DrawRect(0, 0, w, h)
-    end
 
     if panel:GetHovered() then
-        local hoverColor = HL2Scheme.GetColor("Menu.HoverBgColor", Color(255, 155, 0, 255), "SourceScheme")
-        surface.SetDrawColor(hoverColor)
+        -- Menu.ArmedBgColor is used for hovered items
+        local armedBgColor = HL2Scheme.GetColor("Menu.ArmedBgColor", Color(255, 155, 0, 255), "SourceScheme")
+        surface.SetDrawColor(armedBgColor)
         surface.DrawRect(0, 0, w, h)
     end
 end
 
 function SKIN:PaintMenu(panel, w, h)
     if not HL2Scheme then return end
-    local bgColor = HL2Scheme.GetColor("Menu.BgColor", Color(62, 62, 62, 255), "SourceScheme")
+    -- Menu.BgColor from scheme
+    local bgColor = HL2Scheme.GetColor("Menu.BgColor", Color(160, 160, 160, 64), "SourceScheme")
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
-    -- Draw border
-    local borderColor = HL2Scheme.GetColor("Menu.BorderColor", Color(120, 120, 120, 255), "SourceScheme")
-    surface.SetDrawColor(borderColor)
-    surface.DrawOutlinedRect(0, 0, w, h)
+
+    -- MenuBorder uses RaisedBorder in sourceschemebase.res
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+
+    -- RaisedBorder: Bright on top/left, Dark on bottom/right
+    surface.SetDrawColor(colLight)
+    surface.DrawLine(0, 0, w - 1, 0) -- Top
+    surface.DrawLine(0, 0, 0, h - 1) -- Left
+    surface.SetDrawColor(colDark)
+    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
 
 function SKIN:PaintPropertySheet(panel, w, h)
@@ -602,19 +605,20 @@ end
 
 function SKIN:PaintLabel(panel, w, h)
     -- Labels typically don't need special painting, text is rendered by the panel itself
-    -- But we can ensure proper text color
+    -- Label.TextColor is OffWhite in scheme
     if not HL2Scheme then return end
     if not panel.m_bCustomTextColor then
-        local textColor = HL2Scheme.GetColor("Label.TextColor", Color(200, 200, 200, 255), "SourceScheme")
+        local textColor = HL2Scheme.GetColor("Label.TextColor", Color(221, 221, 221, 255), "SourceScheme")
         panel:SetTextColor(textColor)
     end
 end
 
 function SKIN:PaintPanel(panel, w, h)
-    -- Generic panel, can have a background
+    -- Generic panel, Panel.BgColor is "Blank" (transparent) in scheme
+    -- Panels typically don't draw backgrounds unless specifically enabled
     if panel.m_bPaintBackground then
         if not HL2Scheme then return end
-        local bgColor = HL2Scheme.GetColor("Panel.BgColor", Color(62, 62, 62, 255), "SourceScheme")
+        local bgColor = HL2Scheme.GetColor("Panel.BgColor", Color(0, 0, 0, 0), "SourceScheme")
         surface.SetDrawColor(bgColor)
         surface.DrawRect(0, 0, w, h)
     end
@@ -622,20 +626,29 @@ end
 
 function SKIN:PaintProgress(panel, w, h)
     if not HL2Scheme then return end
-    -- Background
-    local bgColor = HL2Scheme.GetColor("ProgressBar.BgColor", Color(60, 60, 60, 255), "SourceScheme")
+    -- Background - ProgressBar.BgColor is TransparentBlack
+    local bgColor = HL2Scheme.GetColor("ProgressBar.BgColor", Color(0, 0, 0, 128), "SourceScheme")
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
-    -- Progress bar
-    local barColor = HL2Scheme.GetColor("ProgressBar.FgColor", Color(255, 155, 0, 255), "SourceScheme")
+
+    -- Progress bar - ProgressBar.FgColor is White
+    local barColor = HL2Scheme.GetColor("ProgressBar.FgColor", Color(255, 255, 255, 255), "SourceScheme")
     local fraction = panel:GetFraction() or 0
     local barWidth = w * fraction
     surface.SetDrawColor(barColor)
     surface.DrawRect(0, 0, barWidth, h)
-    -- Border
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+
+    -- Border - depressed inset style
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+
+    -- DepressedBorder
     surface.SetDrawColor(colDark)
-    surface.DrawOutlinedRect(0, 0, w, h)
+    surface.DrawLine(0, 0, w - 1, 0) -- Top
+    surface.DrawLine(0, 0, 0, h - 1) -- Left
+    surface.SetDrawColor(colLight)
+    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
 
 derma.DefineSkin("HL2", "Half-Life 2 VGUI Skin", SKIN)
