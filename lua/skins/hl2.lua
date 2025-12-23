@@ -63,28 +63,47 @@ SKIN.colButtonBorderHighlight = Color(255, 255, 255, 50)
 SKIN.colButtonBorderShadow = Color(0, 0, 0, 100)
 function SKIN:PaintFrame(panel, w, h)
     if not HL2Scheme then return end
-    -- Background
+
+    -- Background (square corners, not rounded)
     local activeCol = HL2Scheme.GetColor("Frame.BgColor", Color(0, 0, 0, 196), "SourceScheme")
     local inactiveCol = HL2Scheme.GetColor("Frame.OutOfFocusBgColor", Color(160, 160, 160, 32), "SourceScheme")
     local focusWeight = panel.FocusWeight or (panel:IsActive() and 1 or 0)
+
     -- Interpolate based on FocusWeight
     local r = Lerp(focusWeight, inactiveCol.r, activeCol.r)
     local g = Lerp(focusWeight, inactiveCol.g, activeCol.g)
     local b = Lerp(focusWeight, inactiveCol.b, activeCol.b)
     local a = Lerp(focusWeight, inactiveCol.a, activeCol.a)
     local bgColor = Color(r, g, b, a)
-    draw.RoundedBox(8, 0, 0, w, h, bgColor)
 
-    -- Title
-    if panel.GetTitle then
+    -- Draw square frame background (no rounded corners)
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- Title bar background (if drawing title bar)
+    if panel.GetTitle and _drawTitleBar ~= false then
+        local titleBarBg = panel:IsActive() and
+            HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(76, 88, 68, 255), "SourceScheme") or
+            HL2Scheme.GetColor("FrameTitleBar.DisabledBgColor", Color(60, 60, 60, 255), "SourceScheme")
+
+        local inset = 5
+        local captionHeight = 28
+
+        surface.SetDrawColor(titleBarBg)
+        surface.DrawFilledRect(inset, inset, w - inset, captionHeight)
+
+        -- Title text
         local title = panel:GetTitle()
         if title and title ~= "" then
             local font = HL2Scheme.GetFont("UiBold", "DefaultBold", "SourceScheme")
+            local titleColor = panel:IsActive() and
+                HL2Scheme.GetColor("FrameTitleBar.TextColor", Color(255, 255, 255), "SourceScheme") or
+                HL2Scheme.GetColor("FrameTitleBar.DisabledTextColor", Color(136, 136, 136, 255), "SourceScheme")
+
             surface.SetFont(font)
-            surface.SetTextColor(HL2Scheme.GetColor("FrameTitleBar.TextColor", Color(255, 255, 255), "SourceScheme"))
-            -- Source uses 28, 9 for title inset
-            -- User requested it to be less far right
-            surface.SetTextPos(15, 9)
+            surface.SetTextColor(titleColor)
+            -- Source uses specific title inset (m_iTitleTextInsetX = 28 by default)
+            surface.SetTextPos(28, 9)
             surface.DrawText(title)
         end
     end
@@ -92,29 +111,57 @@ end
 
 function SKIN:PaintButton(panel, w, h)
     if not HL2Scheme then return end
+
     local isDown = panel:IsDown()
+    local isArmed = panel.Hovered or panel:IsHovered() -- Armed = hovering
     local isDisabled = not panel:IsEnabled()
 
-    -- Colors
-    local textColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255), "SourceScheme")
-    local bgColor = HL2Scheme.GetColor("Button.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    -- Colors from scheme (matching Source SDK Button.cpp)
+    local defaultFgColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255), "SourceScheme")
+    local armedFgColor = HL2Scheme.GetColor("Button.ArmedTextColor", defaultFgColor, "SourceScheme")
+    local depressedFgColor = HL2Scheme.GetColor("Button.DepressedTextColor", defaultFgColor, "SourceScheme")
+    local disabledFgColor = HL2Scheme.GetColor("Button.DisabledTextColor", Color(100, 100, 100), "SourceScheme")
+
+    local defaultBgColor = HL2Scheme.GetColor("Button.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    local armedBgColor = HL2Scheme.GetColor("Button.ArmedBgColor", defaultBgColor, "SourceScheme")
+    local depressedBgColor = HL2Scheme.GetColor("Button.DepressedBgColor", Color(0, 0, 0, 200), "SourceScheme")
+
+    -- Handle title buttons differently (no borders)
     if panel.IsTitleButton then
-        textColor = HL2Scheme.GetColor("FrameTitleButton.FgColor", Color(200, 200, 200, 196), "SourceScheme")
-        if isDisabled then textColor = HL2Scheme.GetColor("FrameTitleButton.DisabledFgColor", Color(255, 255, 255, 192), "SourceScheme") end
+        local textColor = HL2Scheme.GetColor("FrameTitleButton.FgColor", Color(200, 200, 200, 196), "SourceScheme")
+        if isDisabled then
+            textColor = HL2Scheme.GetColor("FrameTitleButton.DisabledFgColor", Color(255, 255, 255, 192), "SourceScheme")
+        end
         panel:SetTextColor(textColor)
         return
     end
 
-    -- Borders
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(255, 255, 255, 100), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(0, 0, 0, 100), "SourceScheme")
+    -- Determine colors based on state
+    local textColor, bgColor
     if isDisabled then
-        textColor = HL2Scheme.GetColor("Button.DisabledTextColor", Color(100, 100, 100), "SourceScheme")
+        textColor = disabledFgColor
+        bgColor = defaultBgColor
     elseif isDown then
-        textColor = HL2Scheme.GetColor("Button.DepressedTextColor", textColor, "SourceScheme")
-        bgColor = HL2Scheme.GetColor("Button.DepressedBgColor", Color(0, 0, 0, 200), "SourceScheme")
-        surface.SetDrawColor(bgColor)
-        surface.DrawRect(0, 0, w, h)
+        textColor = depressedFgColor
+        bgColor = depressedBgColor
+    elseif isArmed then
+        textColor = armedFgColor
+        bgColor = armedBgColor
+    else
+        textColor = defaultFgColor
+        bgColor = defaultBgColor
+    end
+
+    -- Draw background
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- Draw borders (ButtonBorder or ButtonDepressedBorder style)
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+
+    if isDown then
+        -- Depressed border: dark on top/left, light on bottom/right
         surface.SetDrawColor(colDark)
         surface.DrawLine(0, 0, w - 1, 0) -- Top
         surface.DrawLine(0, 0, 0, h - 1) -- Left
@@ -122,14 +169,13 @@ function SKIN:PaintButton(panel, w, h)
         surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
         surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
     else
-        surface.SetDrawColor(bgColor)
-        surface.DrawRect(0, 0, w, h)
+        -- Normal border: light on top/left, dark on bottom/right
         surface.SetDrawColor(colLight)
-        surface.DrawLine(0, 0, w - 1, 0)
-        surface.DrawLine(0, 0, 0, h - 1)
+        surface.DrawLine(0, 0, w - 1, 0) -- Top
+        surface.DrawLine(0, 0, 0, h - 1) -- Left
         surface.SetDrawColor(colDark)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1)
-        surface.DrawLine(0, h - 1, w - 1, h - 1)
+        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
     end
 
     panel:SetTextColor(textColor)
@@ -194,77 +240,95 @@ end
 
 function SKIN:PaintTextEntry(panel, w, h)
     if not HL2Scheme then return end
+
     local isEnabled = panel:IsEnabled()
     local isFocused = panel:HasFocus()
-    -- Background color
+
+    -- Colors from scheme (matching Source SDK TextEntry.cpp)
+    local fgColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(200, 200, 200, 255), "SourceScheme")
     local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(60, 60, 60, 255), "SourceScheme")
+    local disabledFgColor = HL2Scheme.GetColor("TextEntry.DisabledTextColor", Color(128, 128, 128, 255), "SourceScheme")
     local disabledBgColor = HL2Scheme.GetColor("TextEntry.DisabledBgColor", Color(50, 50, 50, 255), "SourceScheme")
-    local selectedBgColor = HL2Scheme.GetColor("TextEntry.SelectedBgColor", Color(80, 80, 80, 255), "SourceScheme")
-    -- Border colors
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+    local selectedBgColor = HL2Scheme.GetColor("TextEntry.SelectedBgColor", Color(255, 155, 0, 255), "SourceScheme")
+    local cursorColor = HL2Scheme.GetColor("TextEntry.CursorColor", Color(255, 255, 255, 255), "SourceScheme")
+
     -- Draw background
     if not isEnabled then
         surface.SetDrawColor(disabledBgColor)
-    elseif isFocused then
-        surface.SetDrawColor(selectedBgColor)
     else
         surface.SetDrawColor(bgColor)
     end
-
     surface.DrawRect(0, 0, w, h)
-    -- Draw inset border (dark on top/left, light on bottom/right)
+
+    -- Draw ButtonDepressedBorder style (inset border: dark on top/left, light on bottom/right)
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
+
     surface.SetDrawColor(colDark)
     surface.DrawLine(0, 0, w - 1, 0) -- Top
     surface.DrawLine(0, 0, 0, h - 1) -- Left
+
     surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-    -- Text color
-    local textColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(200, 200, 200, 255), "SourceScheme")
-    local disabledTextColor = HL2Scheme.GetColor("TextEntry.DisabledTextColor", Color(128, 128, 128, 255), "SourceScheme")
+
+    -- Set text color
     if not isEnabled then
-        panel:SetTextColor(disabledTextColor)
+        panel:SetTextColor(disabledFgColor)
     else
-        panel:SetTextColor(textColor)
+        panel:SetTextColor(fgColor)
     end
 
-    -- Cursor and highlight color
-    panel:SetCursorColor(HL2Scheme.GetColor("TextEntry.CursorColor", Color(255, 255, 255, 255), "SourceScheme"))
-    panel:SetHighlightColor(HL2Scheme.GetColor("TextEntry.SelectedTextColor", Color(255, 255, 0, 255), "SourceScheme"))
+    -- Set cursor and selection colors
+    panel:SetCursorColor(cursorColor)
+    panel:SetHighlightColor(selectedBgColor)
 end
 
 function SKIN:PaintCheckBox(panel, w, h)
     if not HL2Scheme then return end
+
     local isChecked = panel:GetChecked()
+    local isEnabled = panel:IsEnabled()
 
-    -- Colors
-    local bgColor = HL2Scheme.GetColor("CheckButton.BgColor", Color(45, 45, 48, 255), "SourceScheme")
-    local checkColor = HL2Scheme.GetColor("CheckButton.Check", Color(255, 255, 255, 255), "SourceScheme")
+    -- Colors from scheme (matching Source SDK CheckButton.cpp)
+    local bgColor = HL2Scheme.GetColor("CheckButton.BgColor", Color(62, 70, 55, 255), "SourceScheme")
+    local disabledBgColor = HL2Scheme.GetColor("CheckButton.DisabledBgColor", Color(62, 70, 55, 255), "SourceScheme")
+    local borderColor1 = HL2Scheme.GetColor("CheckButton.Border1", Color(20, 20, 20, 255), "SourceScheme")
+    local borderColor2 = HL2Scheme.GetColor("CheckButton.Border2", Color(90, 90, 90, 255), "SourceScheme")
+    local checkColor = HL2Scheme.GetColor("CheckButton.Check", Color(20, 20, 20, 255), "SourceScheme")
+    local disabledFgColor = HL2Scheme.GetColor("CheckButton.DisabledFgColor", Color(130, 130, 130, 255), "SourceScheme")
 
-    -- Draw background
-    surface.SetDrawColor(bgColor)
-    surface.DrawRect(0, 0, w, h)
+    -- Use Marlett font for checkbox rendering (like Source SDK)
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
 
-    -- Draw border (inset style)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-    -- Draw check mark
+    -- Draw background box using Marlett 'g' character
+    if isEnabled then
+        surface.SetTextColor(bgColor)
+    else
+        surface.SetTextColor(disabledBgColor)
+    end
+    surface.SetTextPos(0, 1)
+    surface.DrawText("g")
+
+    -- Draw border using Marlett 'e' and 'f' characters (creates two-tone border)
+    surface.SetTextColor(borderColor1)
+    surface.SetTextPos(0, 1)
+    surface.DrawText("e")
+
+    surface.SetTextColor(borderColor2)
+    surface.SetTextPos(0, 1)
+    surface.DrawText("f")
+
+    -- Draw check mark using Marlett 'b' character
     if isChecked then
-        -- Draw an X or checkmark
-        surface.SetDrawColor(checkColor)
-        -- Simple checkmark using lines
-        local mx, my = w / 2, h / 2
-        surface.DrawLine(mx - 4, my - 1, mx - 1, my + 2)
-        surface.DrawLine(mx - 1, my + 2, mx + 4, my - 3)
-        surface.DrawLine(mx - 4, my, mx - 1, my + 3)
-        surface.DrawLine(mx - 1, my + 3, mx + 4, my - 2)
+        if not isEnabled then
+            surface.SetTextColor(disabledFgColor)
+        else
+            surface.SetTextColor(checkColor)
+        end
+        surface.SetTextPos(0, 2)
+        surface.DrawText("b")
     end
 end
 
