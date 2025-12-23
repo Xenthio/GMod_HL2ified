@@ -208,6 +208,23 @@ if (Test-Path $srcParticles) {
     Write-Host "    -> Copied particles folder"
 }
 
+# 3.7.5 Symlink Cache and Download folders
+$foldersToLinkInGmod = @("cache", "download")
+foreach ($folder in $foldersToLinkInGmod) {
+    $src = Join-Path $GModPath "garrysmod\$folder"
+    $dest = Join-Path $BuildGModPath $folder
+    
+    # Create source if it doesn't exist (so we have something to link to)
+    if (!(Test-Path $src)) {
+        New-Item -ItemType Directory -Path $src | Out-Null
+    }
+
+    if (!(Test-Path $dest)) {
+        cmd /c mklink /J "$dest" "$src" | Out-Null
+        Write-Host "[+] Linked Folder: garrysmod\$folder"
+    }
+}
+
 # 3.8 Copy Essential Resources Only
 Write-Host "[*] Copying essential resources..."
 $srcResource = Join-Path $GModPath "garrysmod\resource"
@@ -260,6 +277,18 @@ $baseGameInfo = Join-Path $GModPath "garrysmod\gameinfo.txt"
 $destGameInfo = Join-Path $BuildGModPath "gameinfo.txt"
 Copy-Item -Path $baseGameInfo -Destination $destGameInfo -Force
 Write-Host "[+] Copied base gameinfo.txt"
+
+# copy garrysmod\garrysmod.ver
+$baseVerFile = Join-Path $GModPath "garrysmod\garrysmod.ver"
+$destVerFile = Join-Path $BuildGModPath "garrysmod.ver"
+Copy-Item -Path $baseVerFile -Destination $destVerFile -Force
+Write-Host "[+] Copied garrysmod.ver"
+
+# copy steam.inf
+$baseSteamInf = Join-Path $GModPath "garrysmod\steam.inf"
+$destSteamInf = Join-Path $BuildGModPath "steam.inf"   
+Copy-Item -Path $baseSteamInf -Destination $destSteamInf -Force
+Write-Host "[+] Copied steam.inf"
 
 # # Create mount.cfg to load the actual GMod content
 # $cfgPath = Join-Path $BuildGModPath "cfg"
