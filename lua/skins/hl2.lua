@@ -246,6 +246,62 @@ function SKIN:PaintWindowMinimizeButton(panel, w, h)
     surface.DrawText("0")
 end
 
+function SKIN:PaintButtonUp(panel, w, h)
+    if not HL2Scheme then return end
+    -- Scroll bar up button uses Marlett 't' (up arrow)
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(fgColor)
+
+    local tw, th = surface.GetTextSize("t")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("t")
+end
+
+function SKIN:PaintButtonDown(panel, w, h)
+    if not HL2Scheme then return end
+    -- Scroll bar down button uses Marlett 'u' (down arrow)
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(fgColor)
+
+    local tw, th = surface.GetTextSize("u")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("u")
+end
+
+function SKIN:PaintButtonLeft(panel, w, h)
+    if not HL2Scheme then return end
+    -- Scroll bar left button uses Marlett '3' (left arrow)
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(fgColor)
+
+    local tw, th = surface.GetTextSize("3")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("3")
+end
+
+function SKIN:PaintButtonRight(panel, w, h)
+    if not HL2Scheme then return end
+    -- Scroll bar right button uses Marlett '4' (right arrow)
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local fgColor = HL2Scheme.GetColor("ScrollBarButton.FgColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(fgColor)
+
+    local tw, th = surface.GetTextSize("4")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("4")
+end
+
 function SKIN:PaintTextEntry(panel, w, h)
     if not HL2Scheme then return end
 
@@ -576,6 +632,28 @@ function SKIN:PaintMenu(panel, w, h)
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
 
+function SKIN:PaintMenuRightArrow(panel, w, h)
+    if not HL2Scheme then return end
+    -- Draw right arrow using Marlett font '4' character
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local arrowColor = HL2Scheme.GetColor("Menu.TextColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(arrowColor)
+
+    local tw, th = surface.GetTextSize("4")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("4")
+end
+
+function SKIN:PaintMenuSpacer(panel, w, h)
+    if not HL2Scheme then return end
+    -- Draw a horizontal line separator
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    surface.SetDrawColor(colDark)
+    surface.DrawLine(4, h / 2, w - 4, h / 2)
+end
+
 function SKIN:PaintPropertySheet(panel, w, h)
     if not HL2Scheme then return end
     local bgColor = HL2Scheme.GetColor("PropertySheet.BgColor", Color(45, 45, 48, 255), "SourceScheme")
@@ -649,6 +727,50 @@ function SKIN:PaintProgress(panel, w, h)
     surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+end
+
+function SKIN:PaintTooltip(panel, w, h)
+    if not HL2Scheme then return end
+    -- Tooltip.BgColor from scheme (Orange in sourceschemebase.res)
+    local bgColor = HL2Scheme.GetColor("Tooltip.BgColor", Color(255, 155, 0, 255), "SourceScheme")
+    surface.SetDrawColor(bgColor)
+    surface.DrawRect(0, 0, w, h)
+
+    -- ToolTipBorder - all sides dark
+    local borderColor = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    surface.SetDrawColor(borderColor)
+    surface.DrawLine(0, 0, w - 1, 0) -- Top
+    surface.DrawLine(0, 0, 0, h - 1) -- Left
+    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+end
+
+function SKIN:PaintNumberUp(panel, w, h)
+    -- Number widget up button - uses Marlett 't' (up arrow)
+    if not HL2Scheme then return end
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local fgColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(fgColor)
+
+    local tw, th = surface.GetTextSize("t")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("t")
+end
+
+function SKIN:PaintNumberDown(panel, w, h)
+    -- Number widget down button - uses Marlett 'u' (down arrow)
+    if not HL2Scheme then return end
+    local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
+    surface.SetFont(marlettFont)
+
+    local fgColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255, 255), "SourceScheme")
+    surface.SetTextColor(fgColor)
+
+    local tw, th = surface.GetTextSize("u")
+    surface.SetTextPos((w - tw) / 2, (h - th) / 2)
+    surface.DrawText("u")
 end
 
 derma.DefineSkin("HL2", "Half-Life 2 VGUI Skin", SKIN)
