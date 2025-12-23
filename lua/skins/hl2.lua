@@ -308,12 +308,18 @@ function SKIN:PaintTextEntry(panel, w, h)
     local isEnabled = panel:IsEnabled()
 
     -- Colors from scheme (matching Source SDK TextEntry.cpp)
-    local fgColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(200, 200, 200, 255), "SourceScheme")
-    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(60, 60, 60, 255), "SourceScheme")
-    local disabledFgColor = HL2Scheme.GetColor("TextEntry.DisabledTextColor", Color(128, 128, 128, 255), "SourceScheme")
-    local disabledBgColor = HL2Scheme.GetColor("TextEntry.DisabledBgColor", Color(50, 50, 50, 255), "SourceScheme")
+    -- TextEntry.TextColor is OffWhite (221 221 221 255)
+    local fgColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(221, 221, 221, 255), "SourceScheme")
+    -- TextEntry.BgColor is TransparentBlack (0 0 0 128)
+    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
+    -- TextEntry.DisabledTextColor is DullWhite (190 190 190 255)
+    local disabledFgColor = HL2Scheme.GetColor("TextEntry.DisabledTextColor", Color(190, 190, 190, 255), "SourceScheme")
+    -- TextEntry.DisabledBgColor is Blank (0 0 0 0)
+    local disabledBgColor = HL2Scheme.GetColor("TextEntry.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
+    -- TextEntry.SelectedBgColor is Orange (255 155 0 255)
     local selectedBgColor = HL2Scheme.GetColor("TextEntry.SelectedBgColor", Color(255, 155, 0, 255), "SourceScheme")
-    local cursorColor = HL2Scheme.GetColor("TextEntry.CursorColor", Color(255, 255, 255, 255), "SourceScheme")
+    -- TextEntry.CursorColor is OffWhite (221 221 221 255)
+    local cursorColor = HL2Scheme.GetColor("TextEntry.CursorColor", Color(221, 221, 221, 255), "SourceScheme")
 
     -- Draw background
     if not isEnabled then
@@ -324,8 +330,8 @@ function SKIN:PaintTextEntry(panel, w, h)
     surface.DrawRect(0, 0, w, h)
 
     -- Draw ButtonDepressedBorder style (inset border: dark on top/left, light on bottom/right)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(60, 60, 60, 255), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(136, 136, 136, 255), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
 
     surface.SetDrawColor(colDark)
     surface.DrawLine(0, 0, w - 1, 0) -- Top
@@ -604,7 +610,7 @@ end
 function SKIN:PaintMenuOption(panel, w, h)
     if not HL2Scheme then return end
 
-    if panel:GetHovered() then
+    if panel.Hovered then
         -- Menu.ArmedBgColor is used for hovered items
         local armedBgColor = HL2Scheme.GetColor("Menu.ArmedBgColor", Color(255, 155, 0, 255), "SourceScheme")
         surface.SetDrawColor(armedBgColor)
