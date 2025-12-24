@@ -693,23 +693,23 @@ function SKIN:PaintTab(panel, w, h)
         surface.DrawRect(0, 0, w, h)
     end
     
-    -- Border colors from scheme
-    local borderColor = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-    local darkBorder = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    -- Text colors from PropertySheet settings in SourceScheme
+    -- PropertySheet.TextColor = "OffWhite" for inactive tabs
+    -- PropertySheet.SelectedTextColor = "White" for active tabs
+    local textColor
+    if isActive then
+        textColor = HL2Scheme.GetColor("PropertySheet.SelectedTextColor", Color(255, 255, 255, 255), "SourceScheme")
+    else
+        textColor = HL2Scheme.GetColor("PropertySheet.TextColor", Color(221, 221, 221, 255), "SourceScheme")
+    end
+    panel:SetTextColor(textColor)
     
-    surface.SetDrawColor(borderColor)
-    
-    -- Top border
-    surface.DrawLine(0, 0, w - 2, 0)
-    -- Left border  
-    surface.DrawLine(0, 0, 0, h - 1)
-    -- Right border (don't draw - creates 1px gap to next tab)
-    -- Don't draw right border to leave gap
-    
-    -- Bottom border: Active tabs don't draw it (connect with sheet), inactive tabs do
-    if not isActive then
-        surface.SetDrawColor(darkBorder)
-        surface.DrawLine(0, h - 1, w - 2, h - 1)
+    -- Draw borders using TabBorder or TabActiveBorder from SourceScheme
+    -- TabActiveBorder has top border, TabBorder doesn't (inactive tabs shorter)
+    if isActive then
+        HL2Scheme.DrawBorder("TabActiveBorder", 0, 0, w, h, "SourceScheme")
+    else
+        HL2Scheme.DrawBorder("TabBorder", 0, 0, w, h, "SourceScheme")
     end
 end
 
