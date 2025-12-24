@@ -254,6 +254,29 @@ if (Test-Path $srcFonts) {
     Write-Host "    -> Copied fonts"
 }
 
+# copy maps/gm_construct.bsp and maps/gm_flatgrass.bsp
+$srcMaps = Join-Path $GModPath "garrysmod\maps"
+$destMaps = Join-Path $BuildGModPath "maps"
+$mapsToCopy = @("gm_construct.bsp", "gm_flatgrass.bsp")
+if (!(Test-Path $destMaps)) {
+    New-Item -ItemType Directory -Path $destMaps | Out-Null
+}
+foreach ($map in $mapsToCopy) {
+    $srcMap = Join-Path $srcMaps $map
+    if (Test-Path $srcMap) {
+        Copy-Item -Path $srcMap -Destination (Join-Path $destMaps $map) -Force
+        Write-Host "    -> Copied map: $map"
+    }
+}
+
+# copy default spawn menus
+$srcSpawnMenus = Join-Path $GModPath "garrysmod\settings\spawnlist_default"
+$destSpawnMenus = Join-Path $BuildGModPath "settings\spawnlist"
+if (Test-Path $srcSpawnMenus) {
+    Copy-Item -Path $srcSpawnMenus -Destination $destSpawnMenus -Recurse -Force
+    Write-Host "    -> Copied default spawn menus"
+}
+
 # 4. Setup Base Config (gameinfo.txt and mount.cfg)
 # Copy base gameinfo.txt so it acts like GMod
 $baseGameInfo = Join-Path $GModPath "garrysmod\gameinfo.txt"
