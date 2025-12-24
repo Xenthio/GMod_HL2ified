@@ -424,18 +424,15 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
                 surface.SetDrawColor( color )
                 
                 -- Draw line based on side
-                -- Extend horizontal lines to cover full width (including corners)
-                -- Vertical lines go from top to bottom (will overlap horizontal line pixels)
+                -- Draw to full dimensions (x+w, y+h) to ensure all corner pixels are covered
                 if ( side == "Left" ) then
-                    surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h - 1 + offset_y )
+                    surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h + offset_y )
                 elseif ( side == "Right" ) then
-                    surface.DrawLine( x + w - 1 + offset_x, y + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
+                    surface.DrawLine( x + w + offset_x, y + offset_y, x + w + offset_x, y + h + offset_y )
                 elseif ( side == "Top" ) then
-                    -- Draw full width including corners
-                    surface.DrawLine( x + offset_x, y + offset_y, x + w - 1 + offset_x, y + offset_y )
+                    surface.DrawLine( x + offset_x, y + offset_y, x + w + offset_x, y + offset_y )
                 elseif ( side == "Bottom" ) then
-                    -- Draw full width including corners
-                    surface.DrawLine( x + offset_x, y + h - 1 + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
+                    surface.DrawLine( x + offset_x, y + h + offset_y, x + w + offset_x, y + h + offset_y )
                 end
             end
         end
