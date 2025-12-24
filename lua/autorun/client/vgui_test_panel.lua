@@ -291,6 +291,46 @@ local function CreateVGUITestPanel()
     panelLabel:SetPos( 10, 20 )
     panelLabel:SizeToContents()
 
+    -- Section: PropertySheet (Tabs)
+    local sectionLabel10 = vgui.Create( "HL2Label", scroll )
+    sectionLabel10:SetText( "PROPERTYSHEET (TABS)" )
+    sectionLabel10:SetFont( HL2Scheme.GetFont( "UiBold", "DermaDefaultBold", "SourceScheme" ) )
+    sectionLabel10:Dock( TOP )
+    sectionLabel10:DockMargin( 5, 15, 5, 5 )
+
+    local propertySheet = vgui.Create( "DPropertySheet", scroll )
+    propertySheet:Dock( TOP )
+    propertySheet:DockMargin( 5, 5, 5, 5 )
+    propertySheet:SetTall( 150 )
+    propertySheet:SetSkin( "HL2" )
+
+    -- Tab 1
+    local panel2 = vgui.Create( "DPanel", propertySheet )
+    panel2:Dock( FILL )
+    local tab1Label = vgui.Create( "HL2Label", panel2 )
+    tab1Label:SetText( "Content for Tab 1" )
+    tab1Label:SetPos( 10, 10 )
+    tab1Label:SizeToContents()
+    propertySheet:AddSheet( "Tab 1", panel2, "icon16/page.png" )
+
+    -- Tab 2
+    local panel3 = vgui.Create( "DPanel", propertySheet )
+    panel3:Dock( FILL )
+    local tab2Label = vgui.Create( "HL2Label", panel3 )
+    tab2Label:SetText( "Content for Tab 2" )
+    tab2Label:SetPos( 10, 10 )
+    tab2Label:SizeToContents()
+    propertySheet:AddSheet( "Tab 2", panel3, "icon16/page.png" )
+
+    -- Tab 3
+    local panel4 = vgui.Create( "DPanel", propertySheet )
+    panel4:Dock( FILL )
+    local tab3Label = vgui.Create( "HL2Label", panel4 )
+    tab3Label:SetText( "Content for Tab 3" )
+    tab3Label:SetPos( 10, 10 )
+    tab3Label:SizeToContents()
+    propertySheet:AddSheet( "Tab 3", panel4, "icon16/page.png" )
+
     -- Bottom spacing
     local spacer = vgui.Create( "DPanel", scroll )
     spacer:Dock( TOP )

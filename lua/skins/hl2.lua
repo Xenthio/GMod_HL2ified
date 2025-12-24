@@ -704,26 +704,55 @@ function SKIN:PaintTab(panel, w, h)
         surface.SetDrawColor(bgColor)
     end
 
-    -- Fill tab background
-    surface.DrawRect(0, 0, w, h)
+    -- Fill tab background (leave 1px on right for spacing between tabs)
+    surface.DrawRect(0, 0, w - 1, h)
     
-    -- Draw borders - top and sides only (no bottom for active tabs)
+    -- Draw borders
     -- Uses Border.Bright for the outline
     local borderColor = HL2Scheme.GetColor("Border.Bright", Color(120, 120, 120, 255), "SourceScheme")
     surface.SetDrawColor(borderColor)
     
     -- Top border
-    surface.DrawLine(0, 0, w - 1, 0)
+    surface.DrawLine(0, 0, w - 2, 0)
     -- Left border
     surface.DrawLine(0, 0, 0, h - 1)
-    -- Right border  
-    surface.DrawLine(w - 1, 0, w - 1, h - 1)
+    -- Right border (1px before edge for tab spacing)
+    surface.DrawLine(w - 2, 0, w - 2, h - 1)
     
     -- Inactive tabs get a bottom border, active tabs don't (to connect with sheet)
     if not isActive then
         local darkBorder = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
         surface.SetDrawColor(darkBorder)
-        surface.DrawLine(0, h - 1, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 2, h - 1)
+    end
+end
+
+function SKIN:LayoutTab(panel, w, h)
+    -- Active tabs are shifted up 2 pixels to create "lift" effect
+    if panel:IsActive() then
+        panel:SetPos(panel.x, -2)
+    end
+end
+
+function SKIN:PaintPropertySheet(panel, w, h)
+    if not HL2Scheme then return end
+    
+    -- PropertySheet has a border around its content area
+    -- The border breaks at the active tab position for visual connection
+    local border = HL2Scheme.GetBorder("PropertySheetBorder")
+    if border then
+        local activeTab = panel:GetActiveTab()
+        local breakStart, breakEnd = 0, 0
+        
+        if activeTab and IsValid(activeTab) then
+            local tx, ty, tw, th = activeTab:GetBounds()
+            breakStart = tx + 1
+            breakEnd = tx + tw - 2
+        end
+        
+        -- Draw border with break at active tab
+        -- This creates the visual connection between tab and sheet
+        HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, 0, w, h, breakStart, breakEnd)
     end
 end
 

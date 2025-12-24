@@ -398,6 +398,61 @@ function HL2Scheme.GetBorder( name, schemeName )
     return border
 end
 
+-- Draw a border with a break (gap) on the top edge
+-- Used for PropertySheet to create visual connection with active tab
+function HL2Scheme.DrawBorderWithBreak(borderName, x, y, w, h, breakStart, breakEnd, schemeName)
+	local border = HL2Scheme.GetBorder(borderName, schemeName)
+	if not border then return end
+	
+	schemeName = schemeName or "ClientScheme"
+	
+	-- Helper to parse offset string "x y"
+	local function parseOffset(str)
+		if not str then return 0, 0 end
+		local ox, oy = str:match("(%S+)%s+(%S+)")
+		return tonumber(ox) or 0, tonumber(oy) or 0
+	end
+	
+	-- Draw Left, Right, Bottom sides normally
+	for _, side in ipairs({"Left", "Right", "Bottom"}) do
+		if border[side] then
+			for lineNum, lineDef in pairs(border[side]) do
+				local colorRef = lineDef.color
+				local offset_x, offset_y = parseOffset(lineDef.offset)
+				local color = HL2Scheme.GetColor(colorRef, Color(255, 255, 255), schemeName)
+				local i = (tonumber(lineNum) or 1) - 1
+				
+				if side == "Left" then
+					draw.RoundedBox(0, x + i, y + offset_y, 1, h - offset_y * 2, color)
+				elseif side == "Right" then
+					draw.RoundedBox(0, x + w - (i + 1), y + offset_y, 1, h - offset_y * 2, color)
+				elseif side == "Bottom" then
+					draw.RoundedBox(0, x + offset_x, y + h - (i + 1), w - offset_x * 2, 1, color)
+				end
+			end
+		end
+	end
+	
+	-- Draw Top side with break
+	if border.Top then
+		for lineNum, lineDef in pairs(border.Top) do
+			local colorRef = lineDef.color
+			local offset_x, offset_y = parseOffset(lineDef.offset)
+			local color = HL2Scheme.GetColor(colorRef, Color(255, 255, 255), schemeName)
+			local i = (tonumber(lineNum) or 1) - 1
+			
+			-- Draw left section before break
+			if breakStart > offset_x then
+				draw.RoundedBox(0, x + offset_x, y + i, breakStart - offset_x, 1, color)
+			end
+			-- Draw right section after break
+			if breakEnd < w - offset_x then
+				draw.RoundedBox(0, x + breakEnd, y + i, w - breakEnd - offset_x, 1, color)
+			end
+		end
+	end
+end
+
 function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
     local border = HL2Scheme.GetBorder( borderName, schemeName )
     if ( !border ) then return end
