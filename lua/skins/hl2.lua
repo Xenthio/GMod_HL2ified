@@ -1,4 +1,4 @@
-﻿local surface = surface
+local surface = surface
 local Color = Color
 local SKIN = {}
 SKIN.PrintName = "Half-Life 2"
@@ -92,7 +92,7 @@ function SKIN:PaintFrame(panel, w, h)
     HL2Scheme.DrawBorder("FrameBorder", 0, 0, w, h, "SourceScheme")
 
     -- Title bar background (if drawing title bar)
-    if panel.GetTitle and _drawTitleBar ~= false then
+    if panel.GetTitle and panel._drawTitleBar ~= false then
         -- FrameTitleBar.BgColor defaults to "Blank" in sourceschemebase.res
         local titleBarBg = panel:IsActive() and
             HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(0, 0, 0, 0), "SourceScheme") or
@@ -402,7 +402,7 @@ function SKIN:PaintButtonRight(panel, w, h)
 end
 
 function SKIN:PaintTextEntry(panel, w, h)
-    if not HL2Scheme then return end
+    if not HL2Scheme then return true end
 
     local isEnabled = panel:IsEnabled()
 
@@ -422,6 +422,9 @@ function SKIN:PaintTextEntry(panel, w, h)
 
     -- Draw ComboBoxBorder dynamically from scheme (DepressedBorder style)
     HL2Scheme.DrawBorder("ComboBoxBorder", 0, 0, w, h, "SourceScheme")
+    
+    -- Return true to allow GMod's default text rendering
+    return true
 end
 
 function SKIN:PaintCheckBox(panel, w, h)
@@ -477,7 +480,7 @@ function SKIN:PaintCheckBox(panel, w, h)
 end
 
 function SKIN:PaintComboBox(panel, w, h)
-    if not HL2Scheme then return end
+    if not HL2Scheme then return true end
 
     -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
     -- Background should match TextEntry - TransparentBlack (0 0 0 128)
@@ -489,6 +492,9 @@ function SKIN:PaintComboBox(panel, w, h)
 
     -- Draw ComboBoxBorder dynamically from scheme (DepressedBorder style)
     HL2Scheme.DrawBorder("ComboBoxBorder", 0, 0, w, h, "SourceScheme")
+    
+    -- Return true to allow GMod's default text rendering
+    return true
 end
 
 function SKIN:PaintComboDownArrow(panel, w, h)
@@ -535,9 +541,9 @@ function SKIN:PaintSlider(panel, w, h)
 
     -- Track background (drawn in PaintBackground in Source SDK)
     local trackColor = HL2Scheme.GetColor("Slider.TrackColor", Color(31, 31, 31, 255), "SourceScheme")
-    -- Draw track
-    local trackHeight = 4
-    local trackY = (h - trackHeight) / 2
+    -- Draw track - full height as in Source SDK
+    local trackHeight = h
+    local trackY = 0
     surface.SetDrawColor(trackColor)
     surface.DrawRect(0, trackY, w, trackHeight)
     -- Draw DepressedBorder on track dynamically from scheme
@@ -684,22 +690,41 @@ end
 
 function SKIN:PaintTab(panel, w, h)
     if not HL2Scheme then return end
+    
     local isActive = panel:IsActive()
+    
+    -- PropertySheet tab colors from Source SDK
+    -- Active tab uses a lighter color, inactive uses darker
     local bgColor = HL2Scheme.GetColor("PropertySheet.TabBgColor", Color(81, 81, 81, 255), "SourceScheme")
     local activeBgColor = HL2Scheme.GetColor("PropertySheet.ActiveTabBgColor", Color(62, 62, 62, 255), "SourceScheme")
+    
     if isActive then
         surface.SetDrawColor(activeBgColor)
     else
         surface.SetDrawColor(bgColor)
     end
 
+    -- Fill tab background
     surface.DrawRect(0, 0, w, h)
-    -- Draw top and side borders
+    
+    -- Draw borders - top and sides only (no bottom for active tabs)
+    -- Uses Border.Bright for the outline
     local borderColor = HL2Scheme.GetColor("Border.Bright", Color(120, 120, 120, 255), "SourceScheme")
     surface.SetDrawColor(borderColor)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
+    
+    -- Top border
+    surface.DrawLine(0, 0, w - 1, 0)
+    -- Left border
+    surface.DrawLine(0, 0, 0, h - 1)
+    -- Right border  
+    surface.DrawLine(w - 1, 0, w - 1, h - 1)
+    
+    -- Inactive tabs get a bottom border, active tabs don't (to connect with sheet)
+    if not isActive then
+        local darkBorder = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+        surface.SetDrawColor(darkBorder)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
+    end
 end
 
 function SKIN:PaintLabel(panel, w, h)
