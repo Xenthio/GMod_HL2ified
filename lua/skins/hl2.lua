@@ -408,8 +408,7 @@ function SKIN:PaintTextEntry(panel, w, h)
 
     -- Colors from scheme (matching Source SDK TextEntry.cpp)
     -- TextEntry.BgColor is TransparentBlack (0 0 0 128) from sourceschemebase.res
-    -- Use a lighter version for better visibility - light gray
-    local bgColor = Color(62, 62, 66, 255) -- Lighter gray for better text visibility
+    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
     -- TextEntry.DisabledBgColor is Blank (0 0 0 0)
     local disabledBgColor = HL2Scheme.GetColor("TextEntry.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
 
@@ -481,8 +480,8 @@ function SKIN:PaintComboBox(panel, w, h)
     if not HL2Scheme then return end
 
     -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
-    -- Use same lighter background as TextEntry for visibility
-    local bgColor = Color(62, 62, 66, 255) -- Lighter gray for better text visibility
+    -- Background should match TextEntry - TransparentBlack (0 0 0 128)
+    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(0, 0, 0, 128), "SourceScheme")
 
     -- Draw background
     surface.SetDrawColor(bgColor)
