@@ -700,52 +700,61 @@ function SKIN:PaintTab(panel, w, h)
     surface.SetDrawColor(borderColor)
     
     -- Top border
-    surface.DrawLine(0, 0, w - 1, 0)
+    surface.DrawLine(0, 0, w - 2, 0)
     -- Left border  
     surface.DrawLine(0, 0, 0, h - 1)
-    -- Right border (w-1 to leave last pixel for 1px gap spacing)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1)
+    -- Right border (don't draw - creates 1px gap to next tab)
+    -- Don't draw right border to leave gap
     
-    -- Inactive tabs get a dark bottom border, active tabs don't (to connect with sheet)
+    -- Bottom border: Active tabs don't draw it (connect with sheet), inactive tabs do
     if not isActive then
         surface.SetDrawColor(darkBorder)
-        surface.DrawLine(0, h - 1, w - 1, h - 1)
+        surface.DrawLine(0, h - 1, w - 2, h - 1)
     end
 end
 
 function SKIN:LayoutTab(panel, w, h)
-    -- Active tabs shift up 2 pixels for "lift" effect
-    -- Need to get x position from panel itself
+    -- GMod's DTab handles positioning via tabScroller
+    -- Active tabs get taller (28px) vs inactive (20px) - handled by GetTabHeight()
+    -- We don't need to manually reposition tabs as the scroller handles layout
+    -- Just ensure proper height based on active state
     if panel:IsActive() then
-        local x, y = panel:GetPos()
-        panel:SetPos(x, -2)
+        panel:SetTall(28)
     else
-        local x, y = panel:GetPos()
-        panel:SetPos(x, 0)
+        panel:SetTall(20)
     end
 end
 
 function SKIN:PaintPropertySheet(panel, w, h)
     if not HL2Scheme then return end
     
-    -- PropertySheet has a border around its content area (below the tabs)
-    -- The border breaks at the active tab position for visual connection
-    -- In Source SDK, the content area is offset below tabs by tabHeight
+    -- PropertySheet uses tabScroller for tabs
+    -- The content area border should be below the tabScroller
     local activeTab = panel:GetActiveTab()
+    local tabScroller = panel.tabScroller
     
-    if activeTab and IsValid(activeTab) then
-        local tx, ty = activeTab:GetPos()
+    if activeTab and IsValid(activeTab) and IsValid(tabScroller) then
+        -- Get the tab scroller height to know where content starts
+        local scrollerY, scrollerH = 0, tabScroller:GetTall()
+        
+        -- Get active tab position relative to the PropertySheet (not the scroller)
+        -- Tabs are inside tabScroller, so need to account for scroller position
+        local sx, sy = tabScroller:GetPos()
+        local tx, ty = activeTab:GetPos()  -- Position within scroller
         local tw, th = activeTab:GetSize()
-        -- Border starts below the tabs (at ty + th)
-        local contentY = ty + th - 1
+        
+        -- Border starts below the tab scroller
+        local contentY = sy + scrollerH
         local contentH = h - contentY
-        local breakStart = tx + 1
-        local breakEnd = tx + tw - 1
+        
+        -- Break position is tab's position within PropertySheet
+        local breakStart = sx + tx + 1
+        local breakEnd = sx + tx + tw - 1
         
         -- Draw border with break at active tab
         HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, contentY, w, contentH, breakStart, breakEnd, "SourceScheme")
     else
-        -- No active tab, draw full border
+        -- No active tab or scroller, draw full border
         HL2Scheme.DrawBorder("PropertySheetBorder", 0, 0, w, h, "SourceScheme")
     end
 end
