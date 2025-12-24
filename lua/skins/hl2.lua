@@ -64,9 +64,10 @@ SKIN.colButtonBorderShadow = Color(0, 0, 0, 100)
 function SKIN:PaintFrame(panel, w, h)
     if not HL2Scheme then return end
 
-    -- Background - SourceSchemeGMod.res Frame.BgColor = GMod_BG_Opaque (108 111 114 250)
-    local activeCol = HL2Scheme.GetColor("Frame.BgColor", Color(108, 111, 114, 250), "SourceScheme")
-    local inactiveCol = HL2Scheme.GetColor("Frame.OutOfFocusBgColor", Color(97, 100, 102, 240), "SourceScheme")
+    -- Background (FrameBorder uses backgroundtype "2" = rounded corners)
+    -- Colors from sourceschemebase.res
+    local activeCol = HL2Scheme.GetColor("Frame.BgColor", Color(160, 160, 160, 128), "SourceScheme")
+    local inactiveCol = HL2Scheme.GetColor("Frame.OutOfFocusBgColor", Color(160, 160, 160, 32), "SourceScheme")
     local focusWeight = panel.FocusWeight or (panel:IsActive() and 1 or 0)
 
     -- Interpolate based on FocusWeight
@@ -76,42 +77,35 @@ function SKIN:PaintFrame(panel, w, h)
     local a = Lerp(focusWeight, inactiveCol.a, activeCol.a)
     local bgColor = Color(r, g, b, a)
 
-    -- Draw frame background WITHOUT rounded corners (backgroundtype "2" is commented out in SourceSchemeGMod.res)
-    draw.RoundedBox(0, 0, 0, w, h, bgColor)
+    -- Draw rounded frame background (FrameBorder has backgroundtype "2")
+    draw.RoundedBox(8, 0, 0, w, h, bgColor)
 
-    -- Draw FrameBorder (Border.DarkSolid on all sides in SourceSchemeGMod.res)
-    local borderCol = HL2Scheme.GetColor("Border.DarkSolid", Color(40, 40, 40, 255), "SourceScheme")
-    surface.SetDrawColor(borderCol)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-
-    -- Title bar background
+    -- Title bar background (if drawing title bar)
     if panel.GetTitle and _drawTitleBar ~= false then
-        -- FrameTitleBar.BgColor = GMod_BG in SourceSchemeGMod.res
+        -- FrameTitleBar.BgColor defaults to "Blank" in sourceschemebase.res
         local titleBarBg = panel:IsActive() and
-            HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(108, 111, 114, 0), "SourceScheme") or
-            HL2Scheme.GetColor("FrameTitleBar.DisabledBgColor", Color(108, 111, 114, 0), "SourceScheme")
+            HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(0, 0, 0, 0), "SourceScheme") or
+            HL2Scheme.GetColor("FrameTitleBar.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
 
+        -- Frame.ClientInsetX/Y define the insets
         local inset = 5
         local captionHeight = 28
 
         surface.SetDrawColor(titleBarBg)
-        surface.DrawRect(inset, inset, w - inset * 2, captionHeight)
+        surface.DrawRect(inset, inset, w - inset, captionHeight)
 
         -- Title text
         local title = panel:GetTitle()
         if title and title ~= "" then
             local font = HL2Scheme.GetFont("UiBold", "DefaultBold", "SourceScheme")
-            -- FrameTitleBar.TextColor = 255 255 255 204 in SourceSchemeGMod.res
+            -- FrameTitleBar.TextColor defaults to "White" in sourceschemebase.res
             local titleColor = panel:IsActive() and
-                HL2Scheme.GetColor("FrameTitleBar.TextColor", Color(255, 255, 255, 204), "SourceScheme") or
-                HL2Scheme.GetColor("FrameTitleBar.DisabledTextColor", Color(255, 255, 255, 91), "SourceScheme")
+                HL2Scheme.GetColor("FrameTitleBar.TextColor", Color(255, 255, 255, 255), "SourceScheme") or
+                HL2Scheme.GetColor("FrameTitleBar.DisabledTextColor", Color(255, 255, 255, 192), "SourceScheme")
 
             surface.SetFont(font)
             surface.SetTextColor(titleColor)
-            -- Frame.TitleTextInsetX is 16 in SourceSchemeGMod.res
+            -- Frame.TitleTextInsetX is 16 in sourceschemebase.res
             local titleInsetX = tonumber(HL2Scheme.GetResourceString("Frame.TitleTextInsetX", nil, "SourceScheme")) or 16
             surface.SetTextPos(titleInsetX, 9)
             surface.DrawText(title)
@@ -126,15 +120,17 @@ function SKIN:PaintButton(panel, w, h)
     local isArmed = panel.Hovered or panel:IsHovered() -- Armed = hovering
     local isDisabled = not panel:IsEnabled()
 
-    -- Colors from SourceSchemeGMod.res
-    local defaultFgColor = HL2Scheme.GetColor("Button.TextColor", Color(82, 82, 82, 255), "SourceScheme")
-    local armedFgColor = HL2Scheme.GetColor("Button.ArmedTextColor", Color(46, 114, 178, 255), "SourceScheme")
-    local depressedFgColor = HL2Scheme.GetColor("Button.DepressedTextColor", Color(255, 255, 255, 255), "SourceScheme")
-    local disabledFgColor = HL2Scheme.GetColor("Label.DisabledFgColor2", Color(50, 50, 50, 255), "SourceScheme")
+    -- Colors from scheme (matching Source SDK Button.cpp)
+    local defaultFgColor = HL2Scheme.GetColor("Button.TextColor", Color(255, 255, 255, 255), "SourceScheme")
+    local armedFgColor = HL2Scheme.GetColor("Button.ArmedTextColor", defaultFgColor, "SourceScheme")
+    local depressedFgColor = HL2Scheme.GetColor("Button.DepressedTextColor", defaultFgColor, "SourceScheme")
+    -- Disabled text uses Label.DisabledFgColor1 and DisabledFgColor2 for inset effect
+    local disabledFgColor1 = HL2Scheme.GetColor("Label.DisabledFgColor1", Color(117, 117, 117, 255), "SourceScheme")
+    local disabledFgColor2 = HL2Scheme.GetColor("Label.DisabledFgColor2", Color(30, 30, 30, 255), "SourceScheme")
 
-    local defaultBgColor = HL2Scheme.GetColor("Button.BgColor", Color(227, 227, 227, 255), "SourceScheme")
-    local armedBgColor = HL2Scheme.GetColor("Button.ArmedBgColor", Color(240, 240, 240, 255), "SourceScheme")
-    local depressedBgColor = HL2Scheme.GetColor("Button.DepressedBgColor", Color(84, 178, 245, 255), "SourceScheme")
+    local defaultBgColor = HL2Scheme.GetColor("Button.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    local armedBgColor = HL2Scheme.GetColor("Button.ArmedBgColor", defaultBgColor, "SourceScheme")
+    local depressedBgColor = HL2Scheme.GetColor("Button.DepressedBgColor", Color(0, 0, 0, 0), "SourceScheme")
 
     -- Handle title buttons differently (no borders)
     if panel.IsTitleButton then
@@ -149,7 +145,8 @@ function SKIN:PaintButton(panel, w, h)
     -- Determine colors based on state
     local textColor, bgColor
     if isDisabled then
-        textColor = disabledFgColor
+        -- Disabled uses Label.DisabledFgColor2 (darker color for better readability)
+        textColor = disabledFgColor2
         bgColor = defaultBgColor
     elseif isDown then
         textColor = depressedFgColor
@@ -166,21 +163,24 @@ function SKIN:PaintButton(panel, w, h)
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw borders - RaisedBorder uses Border.Subtle in SourceSchemeGMod.res
-    local colBorder = HL2Scheme.GetColor("Border.Subtle", Color(80, 80, 80, 255), "SourceScheme")
+    -- Draw borders (ButtonBorder or ButtonDepressedBorder style)
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
 
     if isDown or isDisabled then
-        -- Depressed/disabled border: inset look
-        surface.SetDrawColor(colBorder)
+        -- Depressed/disabled border: dark on top/left, light on bottom/right (inset look)
+        surface.SetDrawColor(colDark)
         surface.DrawLine(0, 0, w - 1, 0) -- Top
         surface.DrawLine(0, 0, 0, h - 1) -- Left
+        surface.SetDrawColor(colLight)
         surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
         surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
     else
-        -- Normal border: SubtleBorder (all sides same in SourceSchemeGMod.res)
-        surface.SetDrawColor(colBorder)
+        -- Normal border: light on top/left, dark on bottom/right
+        surface.SetDrawColor(colLight)
         surface.DrawLine(0, 0, w - 1, 0) -- Top
         surface.DrawLine(0, 0, 0, h - 1) -- Left
+        surface.SetDrawColor(colDark)
         surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
         surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
     end
@@ -444,15 +444,17 @@ function SKIN:PaintCheckBox(panel, w, h)
     local isChecked = panel:GetChecked()
     local isEnabled = panel:IsEnabled()
 
-    -- Colors from SourceSchemeGMod.res
-    -- CheckButton.BgColor = White
-    -- CheckButton.Border1 and Border2 = Border.Subtle (80 80 80 255)
-    -- CheckButton.Check = Black
-    local bgColor = HL2Scheme.GetColor("CheckButton.BgColor", Color(255, 255, 255, 255), "SourceScheme")
-    local disabledBgColor = HL2Scheme.GetColor("CheckButton.DisabledBgColor", Color(180, 180, 180, 255), "SourceScheme")
-    local borderColor = HL2Scheme.GetColor("Border.Subtle", Color(80, 80, 80, 255), "SourceScheme")
-    local checkColor = HL2Scheme.GetColor("CheckButton.Check", Color(0, 0, 0, 255), "SourceScheme")
-    local disabledFgColor = HL2Scheme.GetColor("CheckButton.DisabledFgColor", Color(0, 0, 0, 255), "SourceScheme")
+    -- Colors from scheme (matching Source SDK CheckButton.cpp)
+    -- CheckButton.BgColor is TransparentBlack
+    local bgColor = HL2Scheme.GetColor("CheckButton.BgColor", Color(0, 0, 0, 128), "SourceScheme")
+    local disabledBgColor = HL2Scheme.GetColor("CheckButton.DisabledBgColor", Color(0, 0, 0, 128), "SourceScheme")
+    -- CheckButton.Border1 references Border.Dark (40 40 40 196)
+    local borderColor1 = HL2Scheme.GetColor("CheckButton.Border1", Color(40, 40, 40, 196), "SourceScheme")
+    -- CheckButton.Border2 references Border.Bright (200 200 200 196)
+    local borderColor2 = HL2Scheme.GetColor("CheckButton.Border2", Color(200, 200, 200, 196), "SourceScheme")
+    -- CheckButton.Check is White (255 255 255 255)
+    local checkColor = HL2Scheme.GetColor("CheckButton.Check", Color(255, 255, 255, 255), "SourceScheme")
+    local disabledFgColor = HL2Scheme.GetColor("Label.DisabledFgColor1", Color(117, 117, 117, 255), "SourceScheme")
 
     -- Use Marlett font for checkbox rendering (like Source SDK)
     local marlettFont = HL2Scheme.GetFont("Marlett", "Marlett", "SourceScheme")
@@ -467,12 +469,12 @@ function SKIN:PaintCheckBox(panel, w, h)
     surface.SetTextPos(0, 1)
     surface.DrawText("g")
 
-    -- Draw border using Marlett 'e' and 'f' characters (creates border)
-    surface.SetTextColor(borderColor)
+    -- Draw border using Marlett 'e' and 'f' characters (creates two-tone border)
+    surface.SetTextColor(borderColor1)
     surface.SetTextPos(0, 1)
     surface.DrawText("e")
 
-    surface.SetTextColor(borderColor)
+    surface.SetTextColor(borderColor2)
     surface.SetTextPos(0, 1)
     surface.DrawText("f")
 
@@ -491,20 +493,24 @@ end
 function SKIN:PaintComboBox(panel, w, h)
     if not HL2Scheme then return end
 
-    -- ComboBox uses ComboBoxBorder which is DepressedBorder in SourceSchemeGMod.res
-    -- SourceSchemeGMod.res: TextEntry.BgColor = White
-    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(255, 255, 255, 255), "SourceScheme")
+    -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
+    -- Use same lighter background as TextEntry for visibility
+    local bgColor = Color(62, 62, 66, 255) -- Lighter gray for better text visibility
 
     -- Draw background
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw DepressedBorder (all sides Border.DarkSolid in SourceSchemeGMod.res)
-    local colBorder = HL2Scheme.GetColor("Border.DarkSolid", Color(40, 40, 40, 255), "SourceScheme")
+    -- Draw DepressedBorder (ComboBoxBorder = DepressedBorder)
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
 
-    surface.SetDrawColor(colBorder)
+    -- DepressedBorder: Dark on top/left, Bright on bottom/right
+    surface.SetDrawColor(colDark)
     surface.DrawLine(0, 0, w - 1, 0) -- Top
     surface.DrawLine(0, 0, 0, h - 1) -- Left
+
+    surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
@@ -512,6 +518,8 @@ end
 function SKIN:PaintComboDownArrow(panel, w, h)
     if not HL2Scheme then return end
 
+    -- The ComboBox button uses Marlett font with 'u' character (down arrow)
+    -- ComboBoxButton has SetTextInset(3, 0) in Source SDK
     local comboBox = panel.ComboBox
     if not comboBox then return end
 
@@ -519,16 +527,16 @@ function SKIN:PaintComboDownArrow(panel, w, h)
     local isPressed = comboBox.Depressed or comboBox:IsMenuOpen()
     local isHovered = comboBox.Hovered
 
-    -- Colors from SourceSchemeGMod.res
-    -- ComboBoxButton.BgColor = GMod_WhiteBlank (255 255 255 0) - transparent
-    local bgColor = HL2Scheme.GetColor("ComboBoxButton.BgColor", Color(255, 255, 255, 0), "SourceScheme")
+    -- Colors from scheme
+    local bgColor = HL2Scheme.GetColor("ComboBoxButton.BgColor", Color(0, 0, 0, 0), "SourceScheme")
     local arrowColor
     if isDisabled then
-        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(81, 81, 81, 255), "SourceScheme")
+        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(127, 127, 127, 255), "SourceScheme")
+        bgColor = HL2Scheme.GetColor("ComboBoxButton.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
     elseif isPressed or isHovered then
-        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArmedArrowColor", Color(110, 110, 110, 255), "SourceScheme")
+        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArmedArrowColor", Color(255, 255, 255, 255), "SourceScheme")
     else
-        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(81, 81, 81, 255), "SourceScheme")
+        arrowColor = HL2Scheme.GetColor("ComboBoxButton.ArrowColor", Color(221, 221, 221, 255), "SourceScheme")
     end
 
     -- Draw background
@@ -681,8 +689,8 @@ function SKIN:PaintMenuOption(panel, w, h)
     if not HL2Scheme then return end
 
     if panel.Hovered then
-        -- Menu.ArmedBgColor from SourceSchemeGMod.res = 132 183 241 255
-        local armedBgColor = HL2Scheme.GetColor("Menu.ArmedBgColor", Color(132, 183, 241, 255), "SourceScheme")
+        -- Menu.ArmedBgColor is used for hovered items
+        local armedBgColor = HL2Scheme.GetColor("Menu.ArmedBgColor", Color(255, 155, 0, 255), "SourceScheme")
         surface.SetDrawColor(armedBgColor)
         surface.DrawRect(0, 0, w, h)
     end
@@ -690,17 +698,20 @@ end
 
 function SKIN:PaintMenu(panel, w, h)
     if not HL2Scheme then return end
-    -- Menu.BgColor from SourceSchemeGMod.res = 233 233 233 255 (light gray)
-    local bgColor = HL2Scheme.GetColor("Menu.BgColor", Color(233, 233, 233, 255), "SourceScheme")
+    -- Menu.BgColor from scheme
+    local bgColor = HL2Scheme.GetColor("Menu.BgColor", Color(160, 160, 160, 64), "SourceScheme")
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- MenuBorder uses SubtleBorder in SourceSchemeGMod.res (all sides Border.Subtle)
-    local colBorder = HL2Scheme.GetColor("Border.Subtle", Color(80, 80, 80, 255), "SourceScheme")
+    -- MenuBorder uses RaisedBorder in sourceschemebase.res
+    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
+    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
 
-    surface.SetDrawColor(colBorder)
+    -- RaisedBorder: Bright on top/left, Dark on bottom/right
+    surface.SetDrawColor(colLight)
     surface.DrawLine(0, 0, w - 1, 0) -- Top
     surface.DrawLine(0, 0, 0, h - 1) -- Left
+    surface.SetDrawColor(colDark)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
 end
