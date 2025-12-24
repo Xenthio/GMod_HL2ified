@@ -1,4 +1,4 @@
-﻿local surface = surface
+local surface = surface
 local Color = Color
 local SKIN = {}
 SKIN.PrintName = "Half-Life 2"
@@ -92,7 +92,7 @@ function SKIN:PaintFrame(panel, w, h)
     HL2Scheme.DrawBorder("FrameBorder", 0, 0, w, h, "SourceScheme")
 
     -- Title bar background (if drawing title bar)
-    if panel.GetTitle and _drawTitleBar ~= false then
+    if panel.GetTitle and panel._drawTitleBar ~= false then
         -- FrameTitleBar.BgColor defaults to "Blank" in sourceschemebase.res
         local titleBarBg = panel:IsActive() and
             HL2Scheme.GetColor("FrameTitleBar.BgColor", Color(0, 0, 0, 0), "SourceScheme") or

@@ -11,13 +11,22 @@ include( "menu/vgui_base.lua" )
 -- ConVar to enable HL2 skin as default
 CreateClientConVar( "hl2_derma_skin", "0", true, false, "Use HL2 VGUI skin as default for all derma controls (0 = off, 1 = on)" )
 
--- Apply HL2 skin as default if enabled
+-- WARNING: This feature overrides vgui.Register globally, which could cause conflicts with other addons
+-- that register VGUI panels after this file loads. The override is persistent until Lua is reloaded.
+-- For maximum compatibility, avoid enabling this feature if you experience issues with other addons.
+
+-- Store the original vgui.Register function
+local originalVguiRegister = vgui.Register
+local isHL2SkinApplied = false
+
+-- Apply or remove HL2 skin as default based on ConVar
 local function ApplyDefaultSkin()
-    if ( GetConVar( "hl2_derma_skin" ):GetBool() ) then
-        -- Set HL2 as the default skin
-        local oldRegister = vgui.Register
+    local shouldApply = GetConVar( "hl2_derma_skin" ):GetBool()
+    
+    if shouldApply and not isHL2SkinApplied then
+        -- Override vgui.Register to apply HL2 skin to new panels
         vgui.Register = function( name, tbl, base )
-            oldRegister( name, tbl, base )
+            originalVguiRegister( name, tbl, base )
 
             -- Hook into panel creation to set HL2 skin
             if ( tbl and !tbl.HL2SkinApplied ) then
@@ -33,13 +42,25 @@ local function ApplyDefaultSkin()
                 tbl.HL2SkinApplied = true
             end
         end
-
+        
+        isHL2SkinApplied = true
         print( "[HL2ified] HL2 Derma skin is now the default skin!" )
+        
+    elseif not shouldApply and isHL2SkinApplied then
+        -- Restore original vgui.Register function
+        vgui.Register = originalVguiRegister
+        isHL2SkinApplied = false
+        print( "[HL2ified] HL2 Derma skin disabled. Original vgui.Register restored." )
     end
 end
 
 -- Apply on load
 ApplyDefaultSkin()
+
+-- Monitor ConVar changes
+cvars.AddChangeCallback( "hl2_derma_skin", function( convar, oldValue, newValue )
+    ApplyDefaultSkin()
+end, "HL2DermaSkinMonitor" )
 
 -- Console command to toggle default skin
 concommand.Add( "hl2_toggle_derma_skin", function()
