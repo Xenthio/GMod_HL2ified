@@ -307,6 +307,42 @@ function HL2Scheme.LoadSchemeFromFile( filename, schemeName )
         end
     end
     
+    -- 4. Parse Borders
+    schemeData.Borders = {}
+    if ( data.Borders and istable(data.Borders) ) then
+        for borderName, borderDef in pairs( data.Borders ) do
+            if ( isstring(borderDef) ) then
+                -- Simple reference to another border (e.g., "BaseBorder" => "DepressedBorder")
+                schemeData.Borders[borderName] = { type = "reference", ref = borderDef }
+            elseif ( istable(borderDef) ) then
+                -- Complex border definition
+                local border = {
+                    type = "complex",
+                    backgroundtype = borderDef.backgroundtype,
+                    inset = borderDef.inset
+                }
+                
+                -- Parse individual sides (Left, Right, Top, Bottom)
+                for _, side in ipairs( {"Left", "Right", "Top", "Bottom"} ) do
+                    if ( borderDef[side] and istable(borderDef[side]) ) then
+                        border[side] = {}
+                        for lineNum, lineDef in pairs( borderDef[side] ) do
+                            if ( istable(lineDef) ) then
+                                local lineData = {
+                                    color = lineDef.color, -- Color reference
+                                    offset = lineDef.offset, -- Offset string
+                                }
+                                border[side][lineNum] = lineData
+                            end
+                        end
+                    end
+                end
+                
+                schemeData.Borders[borderName] = border
+            end
+        end
+    end
+    
     HL2Scheme.Schemes[schemeName] = schemeData
     print( "[HL2Scheme] Loaded " .. filename .. " as " .. schemeName )
 end
@@ -344,6 +380,136 @@ function HL2Scheme.GetResourceString( name, default, schemeName )
     local scheme = HL2Scheme.Schemes[schemeName]
     if ( !scheme ) then return default end
     return scheme.Settings[name] or default
+end
+
+function HL2Scheme.GetBorder( name, schemeName )
+    schemeName = schemeName or "ClientScheme"
+    local scheme = HL2Scheme.Schemes[schemeName]
+    if ( !scheme or !scheme.Borders ) then return nil end
+    
+    local border = scheme.Borders[name]
+    if ( !border ) then return nil end
+    
+    -- Resolve references
+    if ( border.type == "reference" ) then
+        return HL2Scheme.GetBorder( border.ref, schemeName )
+    end
+    
+    return border
+end
+
+-- Draw a border with a break (gap) on the top edge
+-- Used for PropertySheet to create visual connection with active tab
+function HL2Scheme.DrawBorderWithBreak(borderName, x, y, w, h, breakStart, breakEnd, schemeName)
+	local border = HL2Scheme.GetBorder(borderName, schemeName)
+	if not border then return end
+	
+	schemeName = schemeName or "ClientScheme"
+	
+	-- Helper to parse offset string "x y"
+	local function parseOffset(str)
+		if not str then return 0, 0 end
+		local ox, oy = str:match("(%S+)%s+(%S+)")
+		return tonumber(ox) or 0, tonumber(oy) or 0
+	end
+	
+	-- Draw Left, Right, Bottom sides normally
+	for _, side in ipairs({"Left", "Right", "Bottom"}) do
+		if border[side] then
+			for lineNum, lineDef in pairs(border[side]) do
+				local colorRef = lineDef.color
+				local offset_x, offset_y = parseOffset(lineDef.offset)
+				local color = HL2Scheme.GetColor(colorRef, Color(255, 255, 255), schemeName)
+				local i = (tonumber(lineNum) or 1) - 1
+				
+				if side == "Left" then
+					draw.RoundedBox(0, x + i, y + offset_y, 1, h - offset_y * 2, color)
+				elseif side == "Right" then
+					draw.RoundedBox(0, x + w - (i + 1), y + offset_y, 1, h - offset_y * 2, color)
+				elseif side == "Bottom" then
+					draw.RoundedBox(0, x + offset_x, y + h - (i + 1), w - offset_x * 2, 1, color)
+				end
+			end
+		end
+	end
+	
+	-- Draw Top side with break
+	if border.Top then
+		for lineNum, lineDef in pairs(border.Top) do
+			local colorRef = lineDef.color
+			local offset_x, offset_y = parseOffset(lineDef.offset)
+			local color = HL2Scheme.GetColor(colorRef, Color(255, 255, 255), schemeName)
+			local i = (tonumber(lineNum) or 1) - 1
+			
+			-- Draw left section before break
+			if breakStart > offset_x then
+				draw.RoundedBox(0, x + offset_x, y + i, breakStart - offset_x, 1, color)
+			end
+			-- Draw right section after break
+			if breakEnd < w - offset_x then
+				draw.RoundedBox(0, x + breakEnd, y + i, w - breakEnd - offset_x, 1, color)
+			end
+		end
+	end
+end
+
+function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
+    local border = HL2Scheme.GetBorder( borderName, schemeName )
+    if ( !border ) then return end
+    
+    schemeName = schemeName or "ClientScheme"
+    
+    -- Helper to parse offset string "x y"
+    local function parseOffset( str )
+        if ( !str ) then return 0, 0 end
+        local ox, oy = str:match( "(%S+)%s+(%S+)" )
+        return tonumber(ox) or 0, tonumber(oy) or 0
+    end
+    
+    -- Draw each side
+    -- Draw borders matching Source SDK Border.cpp logic
+    -- Order matters: Left, Top, Right, Bottom (as in Source SDK)
+    for _, side in ipairs( {"Left", "Top", "Right", "Bottom"} ) do
+        if ( border[side] ) then
+            for lineNum, lineDef in pairs( border[side] ) do
+                local colorRef = lineDef.color
+                local offset_x, offset_y = parseOffset( lineDef.offset )
+                
+                -- Resolve color reference
+                local color = HL2Scheme.GetColor( colorRef, Color(255, 255, 255), schemeName )
+                
+                -- Draw border lines matching Source SDK Border.cpp Paint() method:
+                -- Source uses DrawFilledRect(x1, y1, x2, y2) where x2/y2 are EXCLUSIVE endpoints
+                -- In Source, wide/tall params are WIDTHS (e.g., 100 for a 100px wide button)
+                -- Source Right side: DrawFilledRect(wide - (i+1), y + startOffset, wide - i, tall - endOffset)
+                -- For i=0: x1 = wide-1, x2 = wide (draws 1px at position wide-1)
+                -- In Lua: our x,y,w,h are position and size. So rightmost pixel is at x+w-1
+                -- Offsets (startOffset/endOffset) SHORTEN the lines from the respective ends
+                -- Line numbers in scheme files are 1-based ("1", "2", etc), convert to 0-based
+                local i = (tonumber(lineNum) or 1) - 1
+                if ( side == "Left" ) then
+                    -- Left: DrawFilledRect(x + i, y + startOffset, x + i + 1, tall - endOffset)
+                    -- x1=x+i, width=1, y1=y+startOffset, height=tall-endOffset-startOffset
+                    draw.RoundedBox( 0, x + i, y + offset_y, 1, h - offset_y * 2, color )
+                elseif ( side == "Right" ) then
+                    -- Right: DrawFilledRect(wide - (i+1), y + startOffset, wide - i, tall - endOffset)
+                    -- x1=wide-(i+1), but 'wide' in Source is the width, so absolute x is: x + w - (i+1)
+                    -- For i=0: x + w - 1 (rightmost pixel)
+                    draw.RoundedBox( 0, x + w - (i + 1), y + offset_y, 1, h - offset_y * 2, color )
+                elseif ( side == "Top" ) then
+                    -- Top: DrawFilledRect(x + startOffset, y + i, wide - endOffset, y + i + 1)
+                    -- x1=x+startOffset, y1=y+i, x2=wide-endOffset, height=1
+                    -- width = wide - endOffset - (x + startOffset) = wide - endOffset - startOffset = w - offset_x*2
+                    draw.RoundedBox( 0, x + offset_x, y + i, w - offset_x * 2, 1, color )
+                elseif ( side == "Bottom" ) then
+                    -- Bottom: DrawFilledRect(x + startOffset, tall - (i+1), wide - endOffset, tall - i)
+                    -- y1=tall-(i+1), but 'tall' in Source is the height, so absolute y is: y + h - (i+1)
+                    -- For i=0: y + h - 1 (bottommost pixel)
+                    draw.RoundedBox( 0, x + offset_x, y + h - (i + 1), w - offset_x * 2, 1, color )
+                end
+            end
+        end
+    end
 end
 
 -- Load standard schemes
