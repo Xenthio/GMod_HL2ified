@@ -77,8 +77,19 @@ function SKIN:PaintFrame(panel, w, h)
     local a = Lerp(focusWeight, inactiveCol.a, activeCol.a)
     local bgColor = Color(r, g, b, a)
 
-    -- Draw rounded frame background (FrameBorder has backgroundtype "2")
-    draw.RoundedBox(8, 0, 0, w, h, bgColor)
+    -- Check if FrameBorder has rounded corners (backgroundtype == "2")
+    local border = HL2Scheme.GetBorder("FrameBorder", "SourceScheme")
+    local isRounded = border and border.backgroundtype == "2"
+    
+    -- Draw frame background - rounded if backgroundtype is "2", square otherwise
+    if isRounded then
+        draw.RoundedBox(8, 0, 0, w, h, bgColor)  -- Rounded corners
+    else
+        draw.RoundedBox(0, 0, 0, w, h, bgColor)  -- Square corners
+    end
+    
+    -- Draw frame border dynamically from scheme
+    HL2Scheme.DrawBorder("FrameBorder", 0, 0, w, h, "SourceScheme")
 
     -- Title bar background (if drawing title bar)
     if panel.GetTitle and _drawTitleBar ~= false then
