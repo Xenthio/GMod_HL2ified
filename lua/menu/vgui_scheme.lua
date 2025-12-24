@@ -430,7 +430,8 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
                 -- For i=0: x1 = wide-1, x2 = wide (draws 1px at position wide-1)
                 -- In Lua: our x,y,w,h are position and size. So rightmost pixel is at x+w-1
                 -- Offsets (startOffset/endOffset) SHORTEN the lines from the respective ends
-                local i = tonumber(lineNum) or 0
+                -- Line numbers in scheme files are 1-based ("1", "2", etc), convert to 0-based
+                local i = (tonumber(lineNum) or 1) - 1
                 if ( side == "Left" ) then
                     -- Left: DrawFilledRect(x + i, y + startOffset, x + i + 1, tall - endOffset)
                     -- x1=x+i, width=1, y1=y+startOffset, height=tall-endOffset-startOffset
