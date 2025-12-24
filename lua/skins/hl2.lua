@@ -174,26 +174,11 @@ function SKIN:PaintButton(panel, w, h)
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw borders (ButtonBorder or ButtonDepressedBorder style)
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-
+    -- Draw borders dynamically from scheme (matches Source SDK button.cpp GetBorder pattern)
     if isDown or isDisabled then
-        -- Depressed/disabled border: dark on top/left, light on bottom/right (inset look)
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+        HL2Scheme.DrawBorder("ButtonDepressedBorder", 0, 0, w, h, "SourceScheme")
     else
-        -- Normal border: light on top/left, dark on bottom/right
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+        HL2Scheme.DrawBorder("ButtonBorder", 0, 0, w, h, "SourceScheme")
     end
 
     panel:SetTextColor(textColor)
@@ -436,17 +421,8 @@ function SKIN:PaintTextEntry(panel, w, h)
     end
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw ButtonDepressedBorder style (inset border: dark on top/left, light on bottom/right)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    -- Draw ComboBoxBorder dynamically from scheme (DepressedBorder style)
+    HL2Scheme.DrawBorder("ComboBoxBorder", 0, 0, w, h, "SourceScheme")
 end
 
 function SKIN:PaintCheckBox(panel, w, h)
