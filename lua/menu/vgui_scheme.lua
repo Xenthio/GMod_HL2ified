@@ -424,25 +424,32 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
                 local color = HL2Scheme.GetColor( colorRef, Color(255, 255, 255), schemeName )
                 
                 -- Draw border lines matching Source SDK Border.cpp Paint() method:
-                -- Uses DrawFilledRect(x1, y1, x2, y2) where x2/y2 are exclusive endpoints
-                -- We use draw.RoundedBox(0, x, y, w, h, color) which draws a filled rect
-                -- Offsets SHORTEN the lines from both ends (startOffset/endOffset), not reposition them
+                -- Source uses DrawFilledRect(x1, y1, x2, y2) where x2/y2 are EXCLUSIVE endpoints
+                -- In Source, wide/tall params are WIDTHS (e.g., 100 for a 100px wide button)
+                -- Source Right side: DrawFilledRect(wide - (i+1), y + startOffset, wide - i, tall - endOffset)
+                -- For i=0: x1 = wide-1, x2 = wide (draws 1px at position wide-1)
+                -- In Lua: our x,y,w,h are position and size. So rightmost pixel is at x+w-1
+                -- Offsets (startOffset/endOffset) SHORTEN the lines from the respective ends
+                local i = tonumber(lineNum) or 0
                 if ( side == "Left" ) then
                     -- Left: DrawFilledRect(x + i, y + startOffset, x + i + 1, tall - endOffset)
-                    -- Draws 1px wide vertical line, offset_y shortens from both ends
-                    draw.RoundedBox( 0, x + offset_x, y + offset_y, 1, h - offset_y - offset_y, color )
+                    -- x1=x+i, width=1, y1=y+startOffset, height=tall-endOffset-startOffset
+                    draw.RoundedBox( 0, x + i, y + offset_y, 1, h - offset_y * 2, color )
                 elseif ( side == "Right" ) then
                     -- Right: DrawFilledRect(wide - (i+1), y + startOffset, wide - i, tall - endOffset)
-                    -- For i=0: wide - 1 to wide (exclusive), so rightmost pixel at wide-1
-                    draw.RoundedBox( 0, x + w - 1 - offset_x, y + offset_y, 1, h - offset_y - offset_y, color )
+                    -- x1=wide-(i+1), but 'wide' in Source is the width, so absolute x is: x + w - (i+1)
+                    -- For i=0: x + w - 1 (rightmost pixel)
+                    draw.RoundedBox( 0, x + w - (i + 1), y + offset_y, 1, h - offset_y * 2, color )
                 elseif ( side == "Top" ) then
                     -- Top: DrawFilledRect(x + startOffset, y + i, wide - endOffset, y + i + 1)
-                    -- Draws 1px tall horizontal line, offset_x shortens from both ends
-                    draw.RoundedBox( 0, x + offset_x, y + offset_y, w - offset_x - offset_x, 1, color )
+                    -- x1=x+startOffset, y1=y+i, x2=wide-endOffset, height=1
+                    -- width = wide - endOffset - (x + startOffset) = wide - endOffset - startOffset = w - offset_x*2
+                    draw.RoundedBox( 0, x + offset_x, y + i, w - offset_x * 2, 1, color )
                 elseif ( side == "Bottom" ) then
                     -- Bottom: DrawFilledRect(x + startOffset, tall - (i+1), wide - endOffset, tall - i)
-                    -- For i=0: tall - 1 to tall (exclusive), so bottommost pixel at tall-1
-                    draw.RoundedBox( 0, x + offset_x, y + h - 1 - offset_y, w - offset_x - offset_x, 1, color )
+                    -- y1=tall-(i+1), but 'tall' in Source is the height, so absolute y is: y + h - (i+1)
+                    -- For i=0: y + h - 1 (bottommost pixel)
+                    draw.RoundedBox( 0, x + offset_x, y + h - (i + 1), w - offset_x * 2, 1, color )
                 end
             end
         end
