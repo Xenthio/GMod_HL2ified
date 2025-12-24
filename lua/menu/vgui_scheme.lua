@@ -412,7 +412,8 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
     end
     
     -- Draw each side
-    for _, side in ipairs( {"Left", "Right", "Top", "Bottom"} ) do
+    -- Order matters for proper overlap: Top, Bottom, Left, Right (so corners connect properly)
+    for _, side in ipairs( {"Top", "Bottom", "Left", "Right"} ) do
         if ( border[side] ) then
             for lineNum, lineDef in pairs( border[side] ) do
                 local colorRef = lineDef.color
@@ -423,13 +424,17 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
                 surface.SetDrawColor( color )
                 
                 -- Draw line based on side
+                -- Extend horizontal lines to cover full width (including corners)
+                -- Vertical lines go from top to bottom (will overlap horizontal line pixels)
                 if ( side == "Left" ) then
                     surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h - 1 + offset_y )
                 elseif ( side == "Right" ) then
                     surface.DrawLine( x + w - 1 + offset_x, y + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
                 elseif ( side == "Top" ) then
+                    -- Draw full width including corners
                     surface.DrawLine( x + offset_x, y + offset_y, x + w - 1 + offset_x, y + offset_y )
                 elseif ( side == "Bottom" ) then
+                    -- Draw full width including corners
                     surface.DrawLine( x + offset_x, y + h - 1 + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
                 end
             end
