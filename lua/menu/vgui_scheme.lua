@@ -412,7 +412,7 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
     end
     
     -- Draw each side
-    -- Order matters for proper overlap: Top, Bottom, Left, Right (so corners connect properly)
+    -- Order matters for proper overlap at corners
     for _, side in ipairs( {"Top", "Bottom", "Left", "Right"} ) do
         if ( border[side] ) then
             for lineNum, lineDef in pairs( border[side] ) do
@@ -424,16 +424,20 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
                 surface.SetDrawColor( color )
                 
                 -- Draw line based on side
-                -- DrawLine draws inclusively from start to end point
-                -- For a rectangle of width w and height h, the last pixel is at x+w-1 and y+h-1
+                -- DrawLine draws inclusively: DrawLine(x1, y1, x2, y2) draws pixels from (x1,y1) to (x2,y2)
+                -- For proper corner coverage, we need lines to meet exactly at corners
                 if ( side == "Left" ) then
-                    surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h - 1 + offset_y )
+                    -- Left edge: full height from top to bottom
+                    surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h - 1 - offset_y )
                 elseif ( side == "Right" ) then
-                    surface.DrawLine( x + w - 1 + offset_x, y + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
+                    -- Right edge: full height from top to bottom
+                    surface.DrawLine( x + w - 1 - offset_x, y + offset_y, x + w - 1 - offset_x, y + h - 1 - offset_y )
                 elseif ( side == "Top" ) then
-                    surface.DrawLine( x + offset_x, y + offset_y, x + w - 1 + offset_x, y + offset_y )
+                    -- Top edge: full width from left to right
+                    surface.DrawLine( x + offset_x, y + offset_y, x + w - 1 - offset_x, y + offset_y )
                 elseif ( side == "Bottom" ) then
-                    surface.DrawLine( x + offset_x, y + h - 1 + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
+                    -- Bottom edge: full width from left to right
+                    surface.DrawLine( x + offset_x, y + h - 1 - offset_y, x + w - 1 - offset_x, y + h - 1 - offset_y )
                 end
             end
         end
