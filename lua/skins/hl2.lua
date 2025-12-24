@@ -681,56 +681,43 @@ function SKIN:PaintMenuSpacer(panel, w, h)
     surface.DrawLine(4, h / 2, w - 4, h / 2)
 end
 
-function SKIN:PaintPropertySheet(panel, w, h)
-    if not HL2Scheme then return end
-    local bgColor = HL2Scheme.GetColor("PropertySheet.BgColor", Color(45, 45, 48, 255), "SourceScheme")
-    surface.SetDrawColor(bgColor)
-    surface.DrawRect(0, 0, w, h)
-end
-
 function SKIN:PaintTab(panel, w, h)
     if not HL2Scheme then return end
     
     local isActive = panel:IsActive()
     
-    -- PropertySheet tab colors from Source SDK
-    -- Active tab uses a lighter color, inactive uses darker
-    local bgColor = HL2Scheme.GetColor("PropertySheet.TabBgColor", Color(81, 81, 81, 255), "SourceScheme")
-    local activeBgColor = HL2Scheme.GetColor("PropertySheet.ActiveTabBgColor", Color(62, 62, 62, 255), "SourceScheme")
+    -- Tabs don't have solid color backgrounds - they should be transparent
+    -- Only draw borders matching Source SDK PropertySheet tab style
     
-    if isActive then
-        surface.SetDrawColor(activeBgColor)
-    else
-        surface.SetDrawColor(bgColor)
-    end
-
-    -- Fill tab background (leave 1px on right for spacing between tabs)
-    surface.DrawRect(0, 0, w - 1, h)
-    
-    -- Draw borders
-    -- Uses Border.Bright for the outline
+    -- Border colors from scheme
     local borderColor = HL2Scheme.GetColor("Border.Bright", Color(120, 120, 120, 255), "SourceScheme")
+    local darkBorder = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
+    
     surface.SetDrawColor(borderColor)
     
     -- Top border
     surface.DrawLine(0, 0, w - 2, 0)
-    -- Left border
+    -- Left border  
     surface.DrawLine(0, 0, 0, h - 1)
-    -- Right border (1px before edge for tab spacing)
+    -- Right border (w-2 to leave 1px gap for tab spacing)
     surface.DrawLine(w - 2, 0, w - 2, h - 1)
     
-    -- Inactive tabs get a bottom border, active tabs don't (to connect with sheet)
+    -- Inactive tabs get a dark bottom border, active tabs don't (to connect with sheet)
     if not isActive then
-        local darkBorder = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
         surface.SetDrawColor(darkBorder)
         surface.DrawLine(0, h - 1, w - 2, h - 1)
     end
 end
 
 function SKIN:LayoutTab(panel, w, h)
-    -- Active tabs are shifted up 2 pixels to create "lift" effect
+    -- Active tabs shift up 2 pixels for "lift" effect
+    -- Need to get x position from panel itself
     if panel:IsActive() then
-        panel:SetPos(panel.x, -2)
+        local x, y = panel:GetPos()
+        panel:SetPos(x, -2)
+    else
+        local x, y = panel:GetPos()
+        panel:SetPos(x, 0)
     end
 end
 
@@ -739,20 +726,19 @@ function SKIN:PaintPropertySheet(panel, w, h)
     
     -- PropertySheet has a border around its content area
     -- The border breaks at the active tab position for visual connection
-    local border = HL2Scheme.GetBorder("PropertySheetBorder")
-    if border then
-        local activeTab = panel:GetActiveTab()
-        local breakStart, breakEnd = 0, 0
-        
-        if activeTab and IsValid(activeTab) then
-            local tx, ty, tw, th = activeTab:GetBounds()
-            breakStart = tx + 1
-            breakEnd = tx + tw - 2
-        end
+    local activeTab = panel:GetActiveTab()
+    
+    if activeTab and IsValid(activeTab) then
+        local tx, ty = activeTab:GetPos()
+        local tw, th = activeTab:GetSize()
+        local breakStart = tx + 1
+        local breakEnd = tx + tw - 2
         
         -- Draw border with break at active tab
-        -- This creates the visual connection between tab and sheet
-        HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, 0, w, h, breakStart, breakEnd)
+        HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, 0, w, h, breakStart, breakEnd, "SourceScheme")
+    else
+        -- No active tab, draw full border
+        HL2Scheme.DrawBorder("PropertySheetBorder", 0, 0, w, h, "SourceScheme")
     end
 end
 
