@@ -693,6 +693,13 @@ function SKIN:PaintMenuOption(panel, w, h)
         local armedBgColor = HL2Scheme.GetColor("Menu.ArmedBgColor", Color(255, 155, 0, 255), "SourceScheme")
         surface.SetDrawColor(armedBgColor)
         surface.DrawRect(0, 0, w, h)
+        -- Set armed text color
+        local armedTextColor = HL2Scheme.GetColor("Menu.ArmedTextColor", Color(255, 255, 255, 255), "SourceScheme")
+        panel:SetTextColor(armedTextColor)
+    else
+        -- Set normal text color
+        local textColor = HL2Scheme.GetColor("Menu.TextColor", Color(255, 255, 255, 255), "SourceScheme")
+        panel:SetTextColor(textColor)
     end
 end
 

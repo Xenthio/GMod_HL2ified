@@ -307,6 +307,42 @@ function HL2Scheme.LoadSchemeFromFile( filename, schemeName )
         end
     end
     
+    -- 4. Parse Borders
+    schemeData.Borders = {}
+    if ( data.Borders and istable(data.Borders) ) then
+        for borderName, borderDef in pairs( data.Borders ) do
+            if ( isstring(borderDef) ) then
+                -- Simple reference to another border (e.g., "BaseBorder" => "DepressedBorder")
+                schemeData.Borders[borderName] = { type = "reference", ref = borderDef }
+            elseif ( istable(borderDef) ) then
+                -- Complex border definition
+                local border = {
+                    type = "complex",
+                    backgroundtype = borderDef.backgroundtype,
+                    inset = borderDef.inset
+                }
+                
+                -- Parse individual sides (Left, Right, Top, Bottom)
+                for _, side in ipairs( {"Left", "Right", "Top", "Bottom"} ) do
+                    if ( borderDef[side] and istable(borderDef[side]) ) then
+                        border[side] = {}
+                        for lineNum, lineDef in pairs( borderDef[side] ) do
+                            if ( istable(lineDef) ) then
+                                local lineData = {
+                                    color = lineDef.color, -- Color reference
+                                    offset = lineDef.offset, -- Offset string
+                                }
+                                border[side][lineNum] = lineData
+                            end
+                        end
+                    end
+                end
+                
+                schemeData.Borders[borderName] = border
+            end
+        end
+    end
+    
     HL2Scheme.Schemes[schemeName] = schemeData
     print( "[HL2Scheme] Loaded " .. filename .. " as " .. schemeName )
 end
@@ -344,6 +380,61 @@ function HL2Scheme.GetResourceString( name, default, schemeName )
     local scheme = HL2Scheme.Schemes[schemeName]
     if ( !scheme ) then return default end
     return scheme.Settings[name] or default
+end
+
+function HL2Scheme.GetBorder( name, schemeName )
+    schemeName = schemeName or "ClientScheme"
+    local scheme = HL2Scheme.Schemes[schemeName]
+    if ( !scheme or !scheme.Borders ) then return nil end
+    
+    local border = scheme.Borders[name]
+    if ( !border ) then return nil end
+    
+    -- Resolve references
+    if ( border.type == "reference" ) then
+        return HL2Scheme.GetBorder( border.ref, schemeName )
+    end
+    
+    return border
+end
+
+function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
+    local border = HL2Scheme.GetBorder( borderName, schemeName )
+    if ( !border ) then return end
+    
+    schemeName = schemeName or "ClientScheme"
+    
+    -- Helper to parse offset string "x y"
+    local function parseOffset( str )
+        if ( !str ) then return 0, 0 end
+        local ox, oy = str:match( "(%S+)%s+(%S+)" )
+        return tonumber(ox) or 0, tonumber(oy) or 0
+    end
+    
+    -- Draw each side
+    for _, side in ipairs( {"Left", "Right", "Top", "Bottom"} ) do
+        if ( border[side] ) then
+            for lineNum, lineDef in pairs( border[side] ) do
+                local colorRef = lineDef.color
+                local offset_x, offset_y = parseOffset( lineDef.offset )
+                
+                -- Resolve color reference
+                local color = HL2Scheme.GetColor( colorRef, Color(255, 255, 255), schemeName )
+                surface.SetDrawColor( color )
+                
+                -- Draw line based on side
+                if ( side == "Left" ) then
+                    surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h - 1 + offset_y )
+                elseif ( side == "Right" ) then
+                    surface.DrawLine( x + w - 1 + offset_x, y + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
+                elseif ( side == "Top" ) then
+                    surface.DrawLine( x + offset_x, y + offset_y, x + w - 1 + offset_x, y + offset_y )
+                elseif ( side == "Bottom" ) then
+                    surface.DrawLine( x + offset_x, y + h - 1 + offset_y, x + w - 1 + offset_x, y + h - 1 + offset_y )
+                end
+            end
+        end
+    end
 end
 
 -- Load standard schemes

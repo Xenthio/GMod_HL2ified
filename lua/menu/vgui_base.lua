@@ -210,7 +210,7 @@ function TEXTENTRY:Paint( w, h )
 
     -- Let base draw the text
     derma.SkinHook( "Paint", "TextEntry", self, w, h )
-    return false
+    return true -- Return true to let DTextEntry draw the text content
 end
 
 vgui.Register( "HL2TextEntry", TEXTENTRY, "DTextEntry" )
@@ -246,12 +246,18 @@ function COMBOBOX:Init()
     self:SetTextColor( HL2Scheme.GetColor( "TextEntry.TextColor", Color( 221, 221, 221, 255 ), "SourceScheme" ) )
     self:SetFGColor( HL2Scheme.GetColor( "TextEntry.TextColor", Color( 221, 221, 221, 255 ), "SourceScheme" ) )
 
-    -- Override the menu to use HL2 skin
+    -- Override the menu to use HL2 skin and set option colors
     local oldOpenMenu = self.OpenMenu
     self.OpenMenu = function( s, ... )
         local ret = oldOpenMenu( s, ... )
         if ( IsValid( s.Menu ) ) then
             s.Menu:SetSkin( "HL2" )
+            -- Set font for menu options
+            for _, child in ipairs( s.Menu:GetChildren() ) do
+                if ( child.SetFont ) then
+                    child:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
+                end
+            end
         end
         return ret
     end
