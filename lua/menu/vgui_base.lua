@@ -195,6 +195,11 @@ function TEXTENTRY:Init()
     self:SetFont( HL2Scheme.GetFont( "Default", "Default", "SourceScheme" ) )
     self:SetCursor( "beam" )
     self:SetTextInset( 4, 0 )
+    
+    -- Set text colors explicitly so they're visible
+    self:SetTextColor( HL2Scheme.GetColor( "TextEntry.TextColor", Color( 221, 221, 221, 255 ), "SourceScheme" ) )
+    self:SetCursorColor( HL2Scheme.GetColor( "TextEntry.CursorColor", Color( 221, 221, 221, 255 ), "SourceScheme" ) )
+    self:SetHighlightColor( HL2Scheme.GetColor( "TextEntry.SelectedBgColor", Color( 255, 155, 0, 255 ), "SourceScheme" ) )
 end
 
 function TEXTENTRY:Paint( w, h )

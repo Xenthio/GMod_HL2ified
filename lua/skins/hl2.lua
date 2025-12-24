@@ -145,8 +145,8 @@ function SKIN:PaintButton(panel, w, h)
     -- Determine colors based on state
     local textColor, bgColor
     if isDisabled then
-        -- Disabled uses Label.DisabledFgColor1
-        textColor = disabledFgColor1
+        -- Disabled uses Label.DisabledFgColor2 (darker color for better readability)
+        textColor = disabledFgColor2
         bgColor = defaultBgColor
     elseif isDown then
         textColor = depressedFgColor
@@ -411,19 +411,11 @@ function SKIN:PaintTextEntry(panel, w, h)
     local isEnabled = panel:IsEnabled()
 
     -- Colors from scheme (matching Source SDK TextEntry.cpp)
-    -- TextEntry.TextColor is OffWhite (221 221 221 255)
-    local fgColor = HL2Scheme.GetColor("TextEntry.TextColor", Color(221, 221, 221, 255), "SourceScheme")
-    -- TextEntry.BgColor is TransparentBlack, but we'll use a slightly more visible dark gray
-    -- to ensure text is visible against various backgrounds
-    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(45, 45, 48, 255), "SourceScheme")
-    -- TextEntry.DisabledTextColor is DullWhite (190 190 190 255)
-    local disabledFgColor = HL2Scheme.GetColor("TextEntry.DisabledTextColor", Color(190, 190, 190, 255), "SourceScheme")
+    -- TextEntry.BgColor is TransparentBlack (0 0 0 128) from sourceschemebase.res
+    -- Use a lighter version for better visibility - light gray
+    local bgColor = Color(62, 62, 66, 255) -- Lighter gray for better text visibility
     -- TextEntry.DisabledBgColor is Blank (0 0 0 0)
     local disabledBgColor = HL2Scheme.GetColor("TextEntry.DisabledBgColor", Color(0, 0, 0, 0), "SourceScheme")
-    -- TextEntry.SelectedBgColor is Orange (255 155 0 255)
-    local selectedBgColor = HL2Scheme.GetColor("TextEntry.SelectedBgColor", Color(255, 155, 0, 255), "SourceScheme")
-    -- TextEntry.CursorColor is OffWhite (221 221 221 255)
-    local cursorColor = HL2Scheme.GetColor("TextEntry.CursorColor", Color(221, 221, 221, 255), "SourceScheme")
 
     -- Draw background
     if not isEnabled then
@@ -444,17 +436,6 @@ function SKIN:PaintTextEntry(panel, w, h)
     surface.SetDrawColor(colLight)
     surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
     surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
-
-    -- Set text color
-    if not isEnabled then
-        panel:SetTextColor(disabledFgColor)
-    else
-        panel:SetTextColor(fgColor)
-    end
-
-    -- Set cursor and selection colors
-    panel:SetCursorColor(cursorColor)
-    panel:SetHighlightColor(selectedBgColor)
 end
 
 function SKIN:PaintCheckBox(panel, w, h)
@@ -513,8 +494,8 @@ function SKIN:PaintComboBox(panel, w, h)
     if not HL2Scheme then return end
 
     -- ComboBox uses ComboBoxBorder which is DepressedBorder in sourceschemebase.res
-    -- Use same background as TextEntry for consistency
-    local bgColor = HL2Scheme.GetColor("TextEntry.BgColor", Color(45, 45, 48, 255), "SourceScheme")
+    -- Use same lighter background as TextEntry for visibility
+    local bgColor = Color(62, 62, 66, 255) -- Lighter gray for better text visibility
 
     -- Draw background
     surface.SetDrawColor(bgColor)
