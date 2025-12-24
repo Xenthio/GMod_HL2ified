@@ -583,14 +583,8 @@ function SKIN:PaintScrollBarGrip(panel, w, h)
     surface.SetDrawColor(nobColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- ScrollBar grip always has inset/depressed borders in HL2 (not changing based on state)
-    -- DepressedBorder: Dark on top/left, Bright on bottom/right
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    -- ScrollBar grip always has inset/depressed borders in HL2
+    HL2Scheme.DrawBorder("DepressedBorder", 0, 0, w, h, "SourceScheme")
 end
 
 function SKIN:PaintVScrollBar(panel, w, h)
@@ -616,17 +610,8 @@ function SKIN:PaintListView(panel, w, h)
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw depressed border (inset border for list panels)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-
-    -- DepressedBorder: Dark on top/left, Bright on bottom/right
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    -- Draw DepressedBorder dynamically from scheme
+    HL2Scheme.DrawBorder("DepressedBorder", 0, 0, w, h, "SourceScheme")
 end
 
 function SKIN:PaintListViewLine(panel, w, h)
@@ -665,17 +650,8 @@ function SKIN:PaintMenu(panel, w, h)
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- MenuBorder uses RaisedBorder in sourceschemebase.res
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-
-    -- RaisedBorder: Bright on top/left, Dark on bottom/right
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    -- Draw MenuBorder dynamically from scheme (RaisedBorder style)
+    HL2Scheme.DrawBorder("MenuBorder", 0, 0, w, h, "SourceScheme")
 end
 
 function SKIN:PaintMenuRightArrow(panel, w, h)
@@ -762,17 +738,8 @@ function SKIN:PaintProgress(panel, w, h)
     surface.SetDrawColor(barColor)
     surface.DrawRect(0, 0, barWidth, h)
 
-    -- Border - depressed inset style
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-
-    -- DepressedBorder
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    -- Draw PropertySheetBorder dynamically from scheme
+    HL2Scheme.DrawBorder("PropertySheetBorder", 0, 0, w, h, "SourceScheme")
 end
 
 function SKIN:PaintTooltip(panel, w, h)
