@@ -686,26 +686,30 @@ function SKIN:PaintTab(panel, w, h)
     
     local isActive = panel:IsActive()
     
-    -- Tabs don't have solid color backgrounds - they should be transparent
-    -- Only draw borders matching Source SDK PropertySheet tab style
+    -- Tab background from scheme (Button.BgColor - "Blank" = transparent in sourceschemebase.res)
+    local bgColor = HL2Scheme.GetColor("Button.BgColor", Color(0, 0, 0, 0), "SourceScheme")
+    if bgColor.a > 0 then
+        surface.SetDrawColor(bgColor)
+        surface.DrawRect(0, 0, w, h)
+    end
     
     -- Border colors from scheme
-    local borderColor = HL2Scheme.GetColor("Border.Bright", Color(120, 120, 120, 255), "SourceScheme")
+    local borderColor = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
     local darkBorder = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
     
     surface.SetDrawColor(borderColor)
     
     -- Top border
-    surface.DrawLine(0, 0, w - 2, 0)
+    surface.DrawLine(0, 0, w - 1, 0)
     -- Left border  
     surface.DrawLine(0, 0, 0, h - 1)
-    -- Right border (w-2 to leave 1px gap for tab spacing)
-    surface.DrawLine(w - 2, 0, w - 2, h - 1)
+    -- Right border (w-1 to leave last pixel for 1px gap spacing)
+    surface.DrawLine(w - 1, 0, w - 1, h - 1)
     
     -- Inactive tabs get a dark bottom border, active tabs don't (to connect with sheet)
     if not isActive then
         surface.SetDrawColor(darkBorder)
-        surface.DrawLine(0, h - 1, w - 2, h - 1)
+        surface.DrawLine(0, h - 1, w - 1, h - 1)
     end
 end
 
@@ -724,18 +728,22 @@ end
 function SKIN:PaintPropertySheet(panel, w, h)
     if not HL2Scheme then return end
     
-    -- PropertySheet has a border around its content area
+    -- PropertySheet has a border around its content area (below the tabs)
     -- The border breaks at the active tab position for visual connection
+    -- In Source SDK, the content area is offset below tabs by tabHeight
     local activeTab = panel:GetActiveTab()
     
     if activeTab and IsValid(activeTab) then
         local tx, ty = activeTab:GetPos()
         local tw, th = activeTab:GetSize()
+        -- Border starts below the tabs (at ty + th)
+        local contentY = ty + th - 1
+        local contentH = h - contentY
         local breakStart = tx + 1
-        local breakEnd = tx + tw - 2
+        local breakEnd = tx + tw - 1
         
         -- Draw border with break at active tab
-        HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, 0, w, h, breakStart, breakEnd, "SourceScheme")
+        HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, contentY, w, contentH, breakStart, breakEnd, "SourceScheme")
     else
         -- No active tab, draw full border
         HL2Scheme.DrawBorder("PropertySheetBorder", 0, 0, w, h, "SourceScheme")
