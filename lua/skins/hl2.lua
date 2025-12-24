@@ -694,8 +694,9 @@ function SKIN:PaintTab(panel, w, h)
     end
     
     -- Text colors from PropertySheet settings in SourceScheme
-    -- PropertySheet.TextColor = "OffWhite" for inactive tabs
-    -- PropertySheet.SelectedTextColor = "White" for active tabs
+    -- Using scheme colors instead of hardcoded values ensures consistency with HL2 UI
+    -- PropertySheet.TextColor = "OffWhite" (221, 221, 221) for inactive tabs
+    -- PropertySheet.SelectedTextColor = "White" (255, 255, 255) for active tabs
     local textColor
     if isActive then
         textColor = HL2Scheme.GetColor("PropertySheet.SelectedTextColor", Color(255, 255, 255, 255), "SourceScheme")
@@ -705,7 +706,9 @@ function SKIN:PaintTab(panel, w, h)
     panel:SetTextColor(textColor)
     
     -- Draw borders using TabBorder or TabActiveBorder from SourceScheme
-    -- TabActiveBorder has top border, TabBorder doesn't (inactive tabs shorter)
+    -- Both have Left, Right, and Top borders, but with different insets
+    -- TabActiveBorder: inset "0 0 1 0" - no bottom inset (connects to content)
+    -- TabBorder: inset "0 0 1 1" - has bottom inset (inactive tabs appear recessed)
     if isActive then
         HL2Scheme.DrawBorder("TabActiveBorder", 0, 0, w, h, "SourceScheme")
     else
