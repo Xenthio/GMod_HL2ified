@@ -488,18 +488,8 @@ function SKIN:PaintComboBox(panel, w, h)
     surface.SetDrawColor(bgColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw DepressedBorder (ComboBoxBorder = DepressedBorder)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-
-    -- DepressedBorder: Dark on top/left, Bright on bottom/right
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, 0, w - 1, 0) -- Top
-    surface.DrawLine(0, 0, 0, h - 1) -- Left
-
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-    surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+    -- Draw ComboBoxBorder dynamically from scheme (DepressedBorder style)
+    HL2Scheme.DrawBorder("ComboBoxBorder", 0, 0, w, h, "SourceScheme")
 end
 
 function SKIN:PaintComboDownArrow(panel, w, h)
@@ -551,15 +541,8 @@ function SKIN:PaintSlider(panel, w, h)
     local trackY = (h - trackHeight) / 2
     surface.SetDrawColor(trackColor)
     surface.DrawRect(0, trackY, w, trackHeight)
-    -- Draw inset border on track (DepressedBorder style)
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-    surface.SetDrawColor(colDark)
-    surface.DrawLine(0, trackY, w - 1, trackY) -- Top
-    surface.DrawLine(0, trackY, 0, trackY + trackHeight - 1) -- Left
-    surface.SetDrawColor(colLight)
-    surface.DrawLine(w - 1, trackY, w - 1, trackY + trackHeight - 1) -- Right
-    surface.DrawLine(0, trackY + trackHeight - 1, w - 1, trackY + trackHeight - 1) -- Bottom
+    -- Draw DepressedBorder on track dynamically from scheme
+    HL2Scheme.DrawBorder("DepressedBorder", 0, trackY, w, trackHeight, "SourceScheme")
 end
 
 function SKIN:PaintSliderKnob(panel, w, h)
@@ -575,26 +558,11 @@ function SKIN:PaintSliderKnob(panel, w, h)
     surface.SetDrawColor(nobColor)
     surface.DrawRect(0, 0, w, h)
 
-    -- Draw raised border on knob
-    local colDark = HL2Scheme.GetColor("Border.Dark", Color(40, 40, 40, 196), "SourceScheme")
-    local colLight = HL2Scheme.GetColor("Border.Bright", Color(200, 200, 200, 196), "SourceScheme")
-
+    -- Draw borders dynamically from scheme
     if isDown then
-        -- Depressed border
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+        HL2Scheme.DrawBorder("ButtonDepressedBorder", 0, 0, w, h, "SourceScheme")
     else
-        -- Raised border
-        surface.SetDrawColor(colLight)
-        surface.DrawLine(0, 0, w - 1, 0) -- Top
-        surface.DrawLine(0, 0, 0, h - 1) -- Left
-        surface.SetDrawColor(colDark)
-        surface.DrawLine(w - 1, 0, w - 1, h - 1) -- Right
-        surface.DrawLine(0, h - 1, w - 1, h - 1) -- Bottom
+        HL2Scheme.DrawBorder("ButtonBorder", 0, 0, w, h, "SourceScheme")
     end
 end
 
