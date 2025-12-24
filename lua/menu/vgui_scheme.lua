@@ -412,8 +412,9 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
     end
     
     -- Draw each side
-    -- Order matters for proper overlap at corners
-    for _, side in ipairs( {"Top", "Bottom", "Left", "Right"} ) do
+    -- Draw borders matching Source SDK Border.cpp logic
+    -- Order matters: Left, Top, Right, Bottom (as in Source SDK)
+    for _, side in ipairs( {"Left", "Top", "Right", "Bottom"} ) do
         if ( border[side] ) then
             for lineNum, lineDef in pairs( border[side] ) do
                 local colorRef = lineDef.color
@@ -421,23 +422,27 @@ function HL2Scheme.DrawBorder( borderName, x, y, w, h, schemeName )
                 
                 -- Resolve color reference
                 local color = HL2Scheme.GetColor( colorRef, Color(255, 255, 255), schemeName )
-                surface.SetDrawColor( color )
                 
-                -- Draw line based on side
-                -- DrawLine draws inclusively: DrawLine(x1, y1, x2, y2) draws pixels from (x1,y1) to (x2,y2)
-                -- For proper corner coverage, we need lines to meet exactly at corners
+                -- Draw border lines matching Source SDK Border.cpp Paint() method:
+                -- Uses DrawFilledRect(x1, y1, x2, y2) where x2/y2 are exclusive endpoints
+                -- We use draw.RoundedBox(0, x, y, w, h, color) which draws a filled rect
+                -- Offsets SHORTEN the lines from both ends (startOffset/endOffset), not reposition them
                 if ( side == "Left" ) then
-                    -- Left edge: full height from top to bottom
-                    surface.DrawLine( x + offset_x, y + offset_y, x + offset_x, y + h - 1 - offset_y )
+                    -- Left: DrawFilledRect(x + i, y + startOffset, x + i + 1, tall - endOffset)
+                    -- Draws 1px wide vertical line, offset_y shortens from both ends
+                    draw.RoundedBox( 0, x + offset_x, y + offset_y, 1, h - offset_y - offset_y, color )
                 elseif ( side == "Right" ) then
-                    -- Right edge: full height from top to bottom
-                    surface.DrawLine( x + w - 1 - offset_x, y + offset_y, x + w - 1 - offset_x, y + h - 1 - offset_y )
+                    -- Right: DrawFilledRect(wide - (i+1), y + startOffset, wide - i, tall - endOffset)
+                    -- For i=0: wide - 1 to wide (exclusive), so rightmost pixel at wide-1
+                    draw.RoundedBox( 0, x + w - 1 - offset_x, y + offset_y, 1, h - offset_y - offset_y, color )
                 elseif ( side == "Top" ) then
-                    -- Top edge: full width from left to right
-                    surface.DrawLine( x + offset_x, y + offset_y, x + w - 1 - offset_x, y + offset_y )
+                    -- Top: DrawFilledRect(x + startOffset, y + i, wide - endOffset, y + i + 1)
+                    -- Draws 1px tall horizontal line, offset_x shortens from both ends
+                    draw.RoundedBox( 0, x + offset_x, y + offset_y, w - offset_x - offset_x, 1, color )
                 elseif ( side == "Bottom" ) then
-                    -- Bottom edge: full width from left to right
-                    surface.DrawLine( x + offset_x, y + h - 1 - offset_y, x + w - 1 - offset_x, y + h - 1 - offset_y )
+                    -- Bottom: DrawFilledRect(x + startOffset, tall - (i+1), wide - endOffset, tall - i)
+                    -- For i=0: tall - 1 to tall (exclusive), so bottommost pixel at tall-1
+                    draw.RoundedBox( 0, x + offset_x, y + h - 1 - offset_y, w - offset_x - offset_x, 1, color )
                 end
             end
         end
