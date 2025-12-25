@@ -512,6 +512,12 @@ function PROPSHEET:Init()
     self.Items = {}
 end
 
+function PROPSHEET:Paint(w, h)
+    -- Use skin's PaintPropertySheet function to draw borders
+    derma.SkinHook( "Paint", "PropertySheet", self, w, h )
+    return true  -- Allow base painting if needed
+end
+
 function PROPSHEET:AddSheet( label, panel, material, NoStretchX, NoStretchY, Tooltip )
     if ( !IsValid( panel ) ) then
         ErrorNoHalt( "HL2PropertySheet:AddSheet tried to add invalid panel!" )
