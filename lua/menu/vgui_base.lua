@@ -485,7 +485,7 @@ function PROPSHEET:Init()
     self.tabContainer = vgui.Create( "DPanel", self )
     self.tabContainer:SetPaintBackground( false )
     self.tabContainer:Dock( TOP )
-    self.tabContainer:SetTall( 28 )
+    self.tabContainer:SetTall( 30 )  -- Increased to accommodate inactive tabs at y=4 with height 26
     -- Source SDK uses m_iTabXIndent for left indent (default 0 or small value)
     -- No margin - tabs should be flush with left edge
     self.tabContainer:DockMargin( 0, 0, 0, 0 )
@@ -515,7 +515,7 @@ function PROPSHEET:AddSheet( label, panel, material, NoStretchX, NoStretchY, Too
     Sheet.Panel = panel
     Sheet.Panel.NoStretchX = NoStretchX
     Sheet.Panel.NoStretchY = NoStretchY
-    Sheet.Panel:SetPos( self:GetPadding(), 28 + self:GetPadding() )
+    Sheet.Panel:SetPos( self:GetPadding(), 30 + self:GetPadding() )
     Sheet.Panel:SetVisible( false )
 
     panel:SetParent( self )
@@ -562,36 +562,67 @@ end
 function PROPSHEET:SetActiveTab( active )
     if ( self.m_pActiveTab == active ) then return end
 
+    -- Find the old sheet
+    local oldSheet = nil
     if ( self.m_pActiveTab ) then
-        if ( self.m_pActiveTab.Panel ) then
-            self.m_pActiveTab.Panel:SetVisible( false )
+        for k, v in pairs( self.Items ) do
+            if ( v.Tab == self.m_pActiveTab ) then
+                oldSheet = v
+                break
+            end
         end
+    end
+
+    -- Hide old panel
+    if ( oldSheet and IsValid( oldSheet.Panel ) ) then
+        oldSheet.Panel:SetVisible( false )
     end
 
     self.m_pActiveTab = active
 
-    if ( self.m_pActiveTab.Panel ) then
-        self.m_pActiveTab.Panel:SetVisible( true )
-        self.m_pActiveTab.Panel:SetPos( self:GetPadding(), 28 + self:GetPadding() )
-        self.m_pActiveTab.Panel:InvalidateLayout( true )
+    -- Find the new sheet
+    local newSheet = nil
+    for k, v in pairs( self.Items ) do
+        if ( v.Tab == active ) then
+            newSheet = v
+            break
+        end
+    end
+
+    -- Show new panel
+    if ( newSheet and IsValid( newSheet.Panel ) ) then
+        newSheet.Panel:SetVisible( true )
+        newSheet.Panel:SetPos( self:GetPadding(), 30 + self:GetPadding() )
+        newSheet.Panel:InvalidateLayout( true )
     end
 
     -- Re-layout tabs when active tab changes
     self:LayoutTabs()
     self:InvalidateLayout()
 
-    self.animFade:Start( self:GetFadeTime(), { OldTab = old, NewTab = self.m_pActiveTab } )
+    self.animFade:Start( self:GetFadeTime(), { OldTab = oldSheet, NewTab = newSheet } )
 end
 
 function PROPSHEET:PerformLayout()
     local ActiveTab = self:GetActiveTab()
-    if ( !ActiveTab || !IsValid( ActiveTab.Panel ) ) then return end
+    if ( !ActiveTab ) then return end
+    
+    -- Find the sheet for the active tab
+    local ActiveSheet = nil
+    for k, v in pairs( self.Items ) do
+        if ( v.Tab == ActiveTab ) then
+            ActiveSheet = v
+            break
+        end
+    end
+    
+    if ( !ActiveSheet || !IsValid( ActiveSheet.Panel ) ) then return end
 
     -- Re-layout tabs to ensure positioning is correct
     self:LayoutTabs()
 
-    local ActivePanel = ActiveTab.Panel
-    ActivePanel:SetPos( self:GetPadding(), 28 + self:GetPadding() )
+    local ActivePanel = ActiveSheet.Panel
+    ActivePanel:SetPos( self:GetPadding(), 30 + self:GetPadding() )
 
     if ( ActivePanel.NoStretchX ) then
         ActivePanel:SetWide( ActivePanel:GetWide() )
@@ -602,25 +633,26 @@ function PROPSHEET:PerformLayout()
     if ( ActivePanel.NoStretchY ) then
         ActivePanel:SetTall( ActivePanel:GetTall() )
     else
-        ActivePanel:SetTall( self:GetTall() - 28 - self:GetPadding() * 2 )
+        ActivePanel:SetTall( self:GetTall() - 30 - self:GetPadding() * 2 )
     end
 
     ActivePanel:InvalidateLayout()
 end
 
 function PROPSHEET:CrossFade( anim, delta, data )
-    local old = data.OldTab
-    local new = data.NewTab
+    local oldSheet = data.OldTab
+    local newSheet = data.NewTab
 
-    if ( !old || !IsValid( old.Panel ) ) then return end
+    if ( !oldSheet || !IsValid( oldSheet.Panel ) ) then return end
+    if ( !newSheet || !IsValid( newSheet.Panel ) ) then return end
 
-    old.Panel:SetAlpha( 255 - (255 * delta) )
-    new.Panel:SetAlpha( 255 * delta )
+    oldSheet.Panel:SetAlpha( 255 - (255 * delta) )
+    newSheet.Panel:SetAlpha( 255 * delta )
 end
 
 function PROPSHEET:SizeToContents()
     local wide, tall = self:GetSize()
-    local y = 28 + self:GetPadding()
+    local y = 30 + self:GetPadding()
 
     for k, v in pairs( self.Items ) do
         if ( IsValid( v.Panel ) ) then
