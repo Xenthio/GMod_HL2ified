@@ -385,6 +385,12 @@ function TAB:Init()
     self:SetSkin( "HL2" )
 end
 
+function TAB:Paint(w, h)
+    -- Use skin's PaintTab function
+    derma.SkinHook( "Paint", "Tab", self, w, h )
+    return false  -- Don't call base paint
+end
+
 function TAB:Setup( label, pPropertySheet, pPanel, strMaterial )
     self:SetText( label )
     self:SetPropertySheet( pPropertySheet )
@@ -447,6 +453,14 @@ function TAB:ApplySchemeSettings()
     h = self:GetTabHeight()
 
     self:SetSize( w + 10, h )
+    
+    -- Apply font from SourceScheme (Source SDK uses "Default" font for tabs)
+    if HL2Scheme then
+        local tabFont = HL2Scheme.GetFont("Default", "DermaDefault", "SourceScheme")
+        if tabFont then
+            self:SetFont(tabFont)
+        end
+    end
 end
 
 function TAB:DoRightClick()
