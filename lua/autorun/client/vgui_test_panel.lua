@@ -298,11 +298,10 @@ local function CreateVGUITestPanel()
     sectionLabel10:Dock( TOP )
     sectionLabel10:DockMargin( 5, 15, 5, 5 )
 
-    local propertySheet = vgui.Create( "DPropertySheet", scroll )
+    local propertySheet = vgui.Create( "HL2PropertySheet", scroll )
     propertySheet:Dock( TOP )
     propertySheet:DockMargin( 5, 5, 5, 5 )
     propertySheet:SetTall( 150 )
-    propertySheet:SetSkin( "HL2" )
 
     -- Tab 1
     local panel2 = vgui.Create( "DPanel", propertySheet )

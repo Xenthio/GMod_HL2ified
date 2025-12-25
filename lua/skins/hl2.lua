@@ -717,47 +717,41 @@ function SKIN:PaintTab(panel, w, h)
 end
 
 function SKIN:LayoutTab(panel, w, h)
-    -- GMod's DTab handles positioning via tabScroller
-    -- Active tabs get taller (28px) vs inactive (20px) - handled by GetTabHeight()
-    -- We don't need to manually reposition tabs as the scroller handles layout
-    -- Just ensure proper height based on active state
-    if panel:IsActive() then
-        panel:SetTall(28)
-    else
-        panel:SetTall(20)
-    end
+    -- HL2Tab handles its own height in GetTabHeight()
+    -- Active tabs: 28px at y=2
+    -- Inactive tabs: 26px at y=4
+    -- No additional layout needed here - positioning is done by HL2PropertySheet:LayoutTabs()
 end
 
 function SKIN:PaintPropertySheet(panel, w, h)
     if not HL2Scheme then return end
     
-    -- PropertySheet uses tabScroller for tabs
-    -- The content area border should be below the tabScroller
+    -- HL2PropertySheet uses tabContainer instead of tabScroller
     local activeTab = panel:GetActiveTab()
-    local tabScroller = panel.tabScroller
+    local tabContainer = panel.tabContainer
     
-    if activeTab and IsValid(activeTab) and IsValid(tabScroller) then
-        -- Get the tab scroller height to know where content starts
-        local scrollerY, scrollerH = 0, tabScroller:GetTall()
+    if activeTab and IsValid(activeTab) and IsValid(tabContainer) then
+        -- Get the tab container height to know where content starts
+        local containerY, containerH = tabContainer:GetPos()
         
-        -- Get active tab position relative to the PropertySheet (not the scroller)
-        -- Tabs are inside tabScroller, so need to account for scroller position
-        local sx, sy = tabScroller:GetPos()
-        local tx, ty = activeTab:GetPos()  -- Position within scroller
+        -- Get active tab position relative to the PropertySheet
+        -- In HL2PropertySheet, tabs are positioned directly in tabContainer
+        local tx, ty = activeTab:GetPos()
         local tw, th = activeTab:GetSize()
         
-        -- Border starts below the tab scroller
-        local contentY = sy + scrollerH
+        -- Border starts below the tab container (at y=28)
+        local contentY = containerY + containerH
         local contentH = h - contentY
         
         -- Break position is tab's position within PropertySheet
-        local breakStart = sx + tx + 1
-        local breakEnd = sx + tx + tw - 1
+        -- Active tab is at y=2, so offset is containerY + 2
+        local breakStart = tx + 1
+        local breakEnd = tx + tw - 1
         
         -- Draw border with break at active tab
         HL2Scheme.DrawBorderWithBreak("PropertySheetBorder", 0, contentY, w, contentH, breakStart, breakEnd, "SourceScheme")
     else
-        -- No active tab or scroller, draw full border
+        -- No active tab or container, draw full border
         HL2Scheme.DrawBorder("PropertySheetBorder", 0, 0, w, h, "SourceScheme")
     end
 end
