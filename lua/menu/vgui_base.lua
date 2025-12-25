@@ -375,6 +375,9 @@ vgui.Register( "HL2NumSlider", NUMSLIDER, "DNumSlider" )
 -- ---------------------------------------------------------
 local TAB = {}
 
+AccessorFunc( TAB, "m_pPropertySheet", "PropertySheet" )
+AccessorFunc( TAB, "m_pPanel", "Panel" )
+
 function TAB:Init()
     self:SetMouseInputEnabled( true )
     self:SetContentAlignment( 7 )
@@ -396,11 +399,15 @@ function TAB:Setup( label, pPropertySheet, pPanel, strMaterial )
 end
 
 function TAB:IsActive()
-    return self:GetPropertySheet():GetActiveTab() == self
+    local sheet = self:GetPropertySheet()
+    if not IsValid(sheet) then return false end
+    return sheet:GetActiveTab() == self
 end
 
 function TAB:DoClick()
-    self:GetPropertySheet():SetActiveTab( self )
+    local sheet = self:GetPropertySheet()
+    if not IsValid(sheet) then return end
+    sheet:SetActiveTab( self )
 end
 
 function TAB:PerformLayout()
@@ -626,3 +633,49 @@ function PROPSHEET:SizeToContents()
 end
 
 vgui.Register( "HL2PropertySheet", PROPSHEET, "DPanel" )
+
+-- ---------------------------------------------------------
+-- Panel Replacement System
+-- Replaces default VGUI panels with HL2 versions when enabled
+-- ---------------------------------------------------------
+
+-- Table mapping default panels to their HL2 equivalents
+local panelReplacements = {
+    ["DPropertySheet"] = "HL2PropertySheet",
+    ["DTab"] = "HL2Tab",
+}
+
+-- Store original vgui.Create
+local originalVguiCreate = vgui.Create
+
+-- Global flag to track if replacements are active
+_HL2_PANEL_REPLACEMENTS_ACTIVE = false
+
+-- Function to enable panel replacements
+function HL2_EnablePanelReplacements()
+    if _HL2_PANEL_REPLACEMENTS_ACTIVE then return end
+    
+    vgui.Create = function(className, parent, name)
+        -- Check if we have a replacement for this panel
+        local replacement = panelReplacements[className]
+        if replacement then
+            -- Create the HL2 version instead
+            return originalVguiCreate(replacement, parent, name)
+        end
+        
+        -- No replacement, use original
+        return originalVguiCreate(className, parent, name)
+    end
+    
+    _HL2_PANEL_REPLACEMENTS_ACTIVE = true
+    print("[HL2ified] Panel replacements enabled (DPropertySheet -> HL2PropertySheet, etc.)")
+end
+
+-- Function to disable panel replacements
+function HL2_DisablePanelReplacements()
+    if not _HL2_PANEL_REPLACEMENTS_ACTIVE then return end
+    
+    vgui.Create = originalVguiCreate
+    _HL2_PANEL_REPLACEMENTS_ACTIVE = false
+    print("[HL2ified] Panel replacements disabled")
+end
