@@ -731,20 +731,18 @@ function SKIN:PaintPropertySheet(panel, w, h)
     local tabContainer = panel.tabContainer
     
     if activeTab and IsValid(activeTab) and IsValid(tabContainer) then
-        -- Get the tab container height to know where content starts
-        local containerY, containerH = tabContainer:GetPos()
-        
-        -- Get active tab position relative to the PropertySheet
-        -- In HL2PropertySheet, tabs are positioned directly in tabContainer
+        -- Get active tab position and size
         local tx, ty = activeTab:GetPos()
         local tw, th = activeTab:GetSize()
         
-        -- Border starts below the tab container (at y=28)
-        local contentY = containerY + containerH
+        -- Source SDK: border is drawn at py + ptall where ptall = height - 1
+        -- Active tab is at y=2 with height 28, so border at y = 2 + (28-1) = 29
+        local containerY = tabContainer:GetY()
+        local contentY = containerY + ty + th - 1  -- py + (ptall with ptall = height - 1)
         local contentH = h - contentY
         
-        -- Break position is tab's position within PropertySheet
-        -- Active tab is at y=2, so offset is containerY + 2
+        -- Break position is tab's x position
+        -- Source SDK uses px + 1 to px + pwide - 1 for the break
         local breakStart = tx + 1
         local breakEnd = tx + tw - 1
         

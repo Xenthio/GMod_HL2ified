@@ -418,6 +418,15 @@ end
 
 function TAB:PerformLayout()
     self:ApplySchemeSettings()
+    
+    -- Apply font from SourceScheme after layout (avoids recursion in ApplySchemeSettings)
+    if HL2Scheme and not self.m_bFontApplied then
+        local tabFont = HL2Scheme.GetFont("Default", "DermaDefault", "SourceScheme")
+        if tabFont then
+            self:SetFont(tabFont)
+            self.m_bFontApplied = true
+        end
+    end
 
     if ( self.Image ) then
         self.Image:SetPos( 7, 3 )
@@ -453,14 +462,6 @@ function TAB:ApplySchemeSettings()
     h = self:GetTabHeight()
 
     self:SetSize( w + 10, h )
-    
-    -- Apply font from SourceScheme (Source SDK uses "Default" font for tabs)
-    if HL2Scheme then
-        local tabFont = HL2Scheme.GetFont("Default", "DermaDefault", "SourceScheme")
-        if tabFont then
-            self:SetFont(tabFont)
-        end
-    end
 end
 
 function TAB:DoRightClick()
