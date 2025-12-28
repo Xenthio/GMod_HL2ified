@@ -24,6 +24,11 @@ local function ApplyDefaultSkin()
     local shouldApply = GetConVar( "hl2_derma_skin" ):GetBool()
     
     if shouldApply and not isHL2SkinApplied then
+        -- Enable panel replacements (DPropertySheet -> HL2PropertySheet, etc.)
+        if HL2_EnablePanelReplacements then
+            HL2_EnablePanelReplacements()
+        end
+        
         -- Override vgui.Register to apply HL2 skin to new panels
         vgui.Register = function( name, tbl, base )
             originalVguiRegister( name, tbl, base )
@@ -47,6 +52,11 @@ local function ApplyDefaultSkin()
         print( "[HL2ified] HL2 Derma skin is now the default skin!" )
         
     elseif not shouldApply and isHL2SkinApplied then
+        -- Disable panel replacements
+        if HL2_DisablePanelReplacements then
+            HL2_DisablePanelReplacements()
+        end
+        
         -- Restore original vgui.Register function
         vgui.Register = originalVguiRegister
         isHL2SkinApplied = false
@@ -298,11 +308,10 @@ local function CreateVGUITestPanel()
     sectionLabel10:Dock( TOP )
     sectionLabel10:DockMargin( 5, 15, 5, 5 )
 
-    local propertySheet = vgui.Create( "DPropertySheet", scroll )
+    local propertySheet = vgui.Create( "HL2PropertySheet", scroll )
     propertySheet:Dock( TOP )
     propertySheet:DockMargin( 5, 5, 5, 5 )
     propertySheet:SetTall( 150 )
-    propertySheet:SetSkin( "HL2" )
 
     -- Tab 1
     local panel2 = vgui.Create( "DPanel", propertySheet )

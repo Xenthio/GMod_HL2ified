@@ -368,3 +368,367 @@ function NUMSLIDER:PerformLayout()
 end
 
 vgui.Register( "HL2NumSlider", NUMSLIDER, "DNumSlider" )
+
+-- ---------------------------------------------------------
+-- HL2Tab - Custom tab for HL2PropertySheet
+-- Matches Source SDK tab behavior
+-- ---------------------------------------------------------
+local TAB = {}
+
+AccessorFunc( TAB, "m_pPropertySheet", "PropertySheet" )
+AccessorFunc( TAB, "m_pPanel", "Panel" )
+
+function TAB:Init()
+    self:SetMouseInputEnabled( true )
+    self:SetContentAlignment( 7 )
+    self:SetTextInset( 10, 4 )
+    self:SetSkin( "HL2" )
+end
+
+function TAB:Paint(w, h)
+    -- Use skin's PaintTab function
+    derma.SkinHook( "Paint", "Tab", self, w, h )
+    return false  -- Don't call base paint
+end
+
+function TAB:Setup( label, pPropertySheet, pPanel, strMaterial )
+    self:SetText( label )
+    self:SetPropertySheet( pPropertySheet )
+    self:SetPanel( pPanel )
+
+    if ( strMaterial ) then
+        self.Image = vgui.Create( "DImage", self )
+        self.Image:SetImage( strMaterial )
+        self.Image:SizeToContents()
+        self:InvalidateLayout()
+    end
+end
+
+function TAB:IsActive()
+    local sheet = self:GetPropertySheet()
+    if not IsValid(sheet) then return false end
+    return sheet:GetActiveTab() == self
+end
+
+function TAB:DoClick()
+    local sheet = self:GetPropertySheet()
+    if not IsValid(sheet) then return end
+    sheet:SetActiveTab( self )
+end
+
+function TAB:PerformLayout()
+    self:ApplySchemeSettings()
+    
+    -- Apply font from SourceScheme after layout (avoids recursion in ApplySchemeSettings)
+    if HL2Scheme and not self.m_bFontApplied then
+        local tabFont = HL2Scheme.GetFont("Default", "DermaDefault", "SourceScheme")
+        if tabFont then
+            self:SetFont(tabFont)
+            self.m_bFontApplied = true
+        end
+    end
+
+    if ( self.Image ) then
+        self.Image:SetPos( 7, 3 )
+
+        if ( !self:IsActive() ) then
+            self.Image:SetImageColor( Color( 255, 255, 255, 155 ) )
+        else
+            self.Image:SetImageColor( color_white )
+        end
+    end
+end
+
+function TAB:GetTabHeight()
+    -- Source SDK: active tab is taller
+    -- Active: y=2, height=tabHeight (28)
+    -- Inactive: y=4, height=tabHeight-2 (26)
+    if ( self:IsActive() ) then
+        return 28
+    else
+        return 26
+    end
+end
+
+function TAB:ApplySchemeSettings()
+    local ExtraInset = 10
+
+    if ( self.Image ) then
+        ExtraInset = ExtraInset + self.Image:GetWide()
+    end
+
+    self:SetTextInset( ExtraInset, 4 )
+    local w, h = self:GetContentSize()
+    h = self:GetTabHeight()
+
+    self:SetSize( w + 10, h )
+end
+
+function TAB:DoRightClick()
+    if ( !IsValid( self:GetPropertySheet() ) ) then return end
+
+    local tabs = DermaMenu()
+    for k, v in pairs( self:GetPropertySheet().Items ) do
+        if ( !v || !IsValid( v.Tab ) || !v.Tab:IsVisible() ) then continue end
+        local option = tabs:AddOption( v.Tab:GetText(), function()
+            if ( !v || !IsValid( v.Tab ) || !IsValid( self:GetPropertySheet() ) ) then return end
+            v.Tab:DoClick()
+        end )
+        if ( IsValid( v.Tab.Image ) ) then option:SetIcon( v.Tab.Image:GetImage() ) end
+    end
+    tabs:Open()
+end
+
+vgui.Register( "HL2Tab", TAB, "DButton" )
+
+-- ---------------------------------------------------------
+-- HL2PropertySheet - Custom PropertySheet for HL2 skin
+-- Matches Source SDK PropertySheet layout
+-- ---------------------------------------------------------
+local PROPSHEET = {}
+
+AccessorFunc( PROPSHEET, "m_pActiveTab", "ActiveTab" )
+AccessorFunc( PROPSHEET, "m_iPadding", "Padding" )
+AccessorFunc( PROPSHEET, "m_fFadeTime", "FadeTime" )
+AccessorFunc( PROPSHEET, "m_bShowIcons", "ShowIcons" )
+
+function PROPSHEET:Init()
+    self:SetSkin( "HL2" )
+    self:SetShowIcons( true )
+
+    -- Create a container for tabs instead of DHorizontalScroller
+    self.tabContainer = vgui.Create( "DPanel", self )
+    self.tabContainer:SetPaintBackground( false )
+    self.tabContainer:Dock( TOP )
+    self.tabContainer:SetTall( 30 )  -- Increased to accommodate inactive tabs at y=4 with height 26
+    -- Source SDK uses m_iTabXIndent for left indent (default 0 or small value)
+    -- No margin - tabs should be flush with left edge
+    self.tabContainer:DockMargin( 0, 0, 0, 0 )
+
+    self:SetFadeTime( 0.1 )
+    self:SetPadding( 8 )
+
+    self.animFade = Derma_Anim( "Fade", self, self.CrossFade )
+
+    self.Items = {}
+end
+
+function PROPSHEET:Paint(w, h)
+    -- Use skin's PaintPropertySheet function to draw borders
+    derma.SkinHook( "Paint", "PropertySheet", self, w, h )
+    return true  -- Allow base painting if needed
+end
+
+function PROPSHEET:AddSheet( label, panel, material, NoStretchX, NoStretchY, Tooltip )
+    if ( !IsValid( panel ) ) then
+        ErrorNoHalt( "HL2PropertySheet:AddSheet tried to add invalid panel!" )
+        debug.Trace()
+        return
+    end
+
+    local Sheet = {}
+    Sheet.Name = label
+
+    Sheet.Tab = vgui.Create( "HL2Tab", self.tabContainer )
+    Sheet.Tab:SetTooltip( Tooltip )
+    Sheet.Tab:Setup( label, self, panel, material )
+
+    Sheet.Panel = panel
+    Sheet.Panel.NoStretchX = NoStretchX
+    Sheet.Panel.NoStretchY = NoStretchY
+    Sheet.Panel:SetPos( self:GetPadding(), 30 + self:GetPadding() )
+    Sheet.Panel:SetVisible( false )
+
+    panel:SetParent( self )
+
+    table.insert( self.Items, Sheet )
+
+    -- Layout tabs manually to match Source SDK
+    self:LayoutTabs()
+
+    if ( !self:GetActiveTab() ) then
+        self:SetActiveTab( Sheet.Tab )
+        Sheet.Panel:SetVisible( true )
+    end
+
+    return Sheet
+end
+
+function PROPSHEET:LayoutTabs()
+    -- Source SDK: xtab starts at m_iTabXIndent, then xtab += (width + 1)
+    local xtab = 0  -- Start at left edge like Source SDK (m_iTabXIndent typically 0)
+    
+    for k, v in pairs( self.Items ) do
+        if ( !IsValid( v.Tab ) ) then continue end
+        
+        local w, h = v.Tab:GetSize()
+        local isActive = v.Tab:IsActive()
+        
+        -- Source SDK positioning:
+        -- Active tab: SetBounds(xtab, 2, width, tabHeight)
+        -- Inactive tab: SetBounds(xtab, 4, width, tabHeight - 2)
+        if isActive then
+            v.Tab:SetPos( xtab, 2 )
+            v.Tab:SetTall( 28 )
+        else
+            v.Tab:SetPos( xtab, 4 )
+            v.Tab:SetTall( 26 )
+        end
+        
+        -- Source SDK: xtab += (width + 1) - 1px gap between tabs
+        xtab = xtab + w + 1
+    end
+end
+
+function PROPSHEET:SetActiveTab( active )
+    if ( self.m_pActiveTab == active ) then return end
+
+    -- Find the old sheet
+    local oldSheet = nil
+    if ( self.m_pActiveTab ) then
+        for k, v in pairs( self.Items ) do
+            if ( v.Tab == self.m_pActiveTab ) then
+                oldSheet = v
+                break
+            end
+        end
+    end
+
+    -- Hide old panel
+    if ( oldSheet and IsValid( oldSheet.Panel ) ) then
+        oldSheet.Panel:SetVisible( false )
+    end
+
+    self.m_pActiveTab = active
+
+    -- Find the new sheet
+    local newSheet = nil
+    for k, v in pairs( self.Items ) do
+        if ( v.Tab == active ) then
+            newSheet = v
+            break
+        end
+    end
+
+    -- Show new panel
+    if ( newSheet and IsValid( newSheet.Panel ) ) then
+        newSheet.Panel:SetVisible( true )
+        newSheet.Panel:SetPos( self:GetPadding(), 30 + self:GetPadding() )
+        newSheet.Panel:InvalidateLayout( true )
+    end
+
+    -- Re-layout tabs when active tab changes
+    self:LayoutTabs()
+    self:InvalidateLayout()
+
+    self.animFade:Start( self:GetFadeTime(), { OldTab = oldSheet, NewTab = newSheet } )
+end
+
+function PROPSHEET:PerformLayout()
+    local ActiveTab = self:GetActiveTab()
+    if ( !ActiveTab ) then return end
+    
+    -- Find the sheet for the active tab
+    local ActiveSheet = nil
+    for k, v in pairs( self.Items ) do
+        if ( v.Tab == ActiveTab ) then
+            ActiveSheet = v
+            break
+        end
+    end
+    
+    if ( !ActiveSheet || !IsValid( ActiveSheet.Panel ) ) then return end
+
+    -- Re-layout tabs to ensure positioning is correct
+    self:LayoutTabs()
+
+    local ActivePanel = ActiveSheet.Panel
+    ActivePanel:SetPos( self:GetPadding(), 30 + self:GetPadding() )
+
+    if ( ActivePanel.NoStretchX ) then
+        ActivePanel:SetWide( ActivePanel:GetWide() )
+    else
+        ActivePanel:SetWide( self:GetWide() - self:GetPadding() * 2 )
+    end
+
+    if ( ActivePanel.NoStretchY ) then
+        ActivePanel:SetTall( ActivePanel:GetTall() )
+    else
+        ActivePanel:SetTall( self:GetTall() - 30 - self:GetPadding() * 2 )
+    end
+
+    ActivePanel:InvalidateLayout()
+end
+
+function PROPSHEET:CrossFade( anim, delta, data )
+    local oldSheet = data.OldTab
+    local newSheet = data.NewTab
+
+    if ( !oldSheet || !IsValid( oldSheet.Panel ) ) then return end
+    if ( !newSheet || !IsValid( newSheet.Panel ) ) then return end
+
+    oldSheet.Panel:SetAlpha( 255 - (255 * delta) )
+    newSheet.Panel:SetAlpha( 255 * delta )
+end
+
+function PROPSHEET:SizeToContents()
+    local wide, tall = self:GetSize()
+    local y = 30 + self:GetPadding()
+
+    for k, v in pairs( self.Items ) do
+        if ( IsValid( v.Panel ) ) then
+            v.Panel:InvalidateLayout( true )
+            tall = math.max( tall, y + v.Panel:GetTall() + self:GetPadding() )
+        end
+    end
+
+    self:SetSize( wide, tall )
+end
+
+vgui.Register( "HL2PropertySheet", PROPSHEET, "DPanel" )
+
+-- ---------------------------------------------------------
+-- Panel Replacement System
+-- Replaces default VGUI panels with HL2 versions when enabled
+-- ---------------------------------------------------------
+
+-- Table mapping default panels to their HL2 equivalents
+local panelReplacements = {
+    ["DPropertySheet"] = "HL2PropertySheet",
+    ["DTab"] = "HL2Tab",
+}
+
+-- Store original vgui.Create
+local originalVguiCreate = vgui.Create
+
+-- Global flag to track if replacements are active
+_HL2_PANEL_REPLACEMENTS_ACTIVE = false
+
+-- Function to enable panel replacements
+function HL2_EnablePanelReplacements()
+    if _HL2_PANEL_REPLACEMENTS_ACTIVE then return end
+    
+    vgui.Create = function(className, parent, name)
+        -- Check if we have a replacement for this panel
+        local replacement = panelReplacements[className]
+        if replacement then
+            -- Create the HL2 version instead
+            return originalVguiCreate(replacement, parent, name)
+        end
+        
+        -- No replacement, use original
+        return originalVguiCreate(className, parent, name)
+    end
+    
+    _HL2_PANEL_REPLACEMENTS_ACTIVE = true
+    print("[HL2ified] Panel replacements enabled (DPropertySheet -> HL2PropertySheet, etc.)")
+end
+
+-- Function to disable panel replacements
+function HL2_DisablePanelReplacements()
+    if not _HL2_PANEL_REPLACEMENTS_ACTIVE then return end
+    
+    vgui.Create = originalVguiCreate
+    _HL2_PANEL_REPLACEMENTS_ACTIVE = false
+    print("[HL2ified] Panel replacements disabled")
+end
